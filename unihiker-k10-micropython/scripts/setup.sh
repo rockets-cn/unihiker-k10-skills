@@ -9,6 +9,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 K10_CONFIG_DIR="${HOME}/.k10"
 SETUP_DONE_MARKER="${K10_CONFIG_DIR}/.setup-done"
+K10_BOARD_MANAGER_URL="https://downloadcd.dfrobot.com.cn/UNIHIKER/package_unihiker_index.json"
+K10_CORE="UNIHIKER:esp32"
 
 SHOW_OUTPUT=false
 if [[ "$1" == "--show" ]]; then
@@ -96,11 +98,9 @@ configure_arduino_cli() {
     local board_urls
     board_urls=$(arduino-cli config dump --format json 2>/dev/null | grep -o '"additional_urls": \[[^]]*\]' || echo "")
     
-    if [[ ! "$board_urls" == *"unihiker"* ]]; then
+    if [[ ! "$board_urls" == *"UNIHIKER"* && ! "$board_urls" == *"unihiker"* ]]; then
         log_info "Adding Unihiker board manager URL..."
-        # Note: This is a placeholder URL - update with actual Unihiker board manager URL
-        # arduino-cli config add board_manager.additional_urls https://...
-        log_warn "Please manually add Unihiker board manager URL if available"
+        arduino-cli config add board_manager.additional_urls "$K10_BOARD_MANAGER_URL"
     fi
     
     log_success "arduino-cli configured"
@@ -113,23 +113,11 @@ install_k10_bsp() {
     # Update index
     arduino-cli core update-index
     
-    # Try to install K10 core (this may vary based on actual package name)
-    # Common patterns: unihiker:k10, dfrobot:k10, etc.
-    local cores=("unihiker:k10" "dfrobot:k10" "esp32:esp32")
-    local installed=false
-    
-    for core in "${cores[@]}"; do
-        if arduino-cli core install "$core" 2>/dev/null; then
-            log_success "Installed core: $core"
-            installed=true
-            break
-        fi
-    done
-    
-    if [[ "$installed" == false ]]; then
+    if arduino-cli core install "$K10_CORE"; then
+        log_success "Installed core: $K10_CORE"
+    else
         log_warn "Could not auto-install K10 BSP automatically"
-        log_warn "Please install manually via Arduino IDE or Mind+"
-        log_warn "Then run: arduino-cli core install <core_name>"
+        log_warn "Run manually: arduino-cli core install $K10_CORE"
     fi
     
     # Install common libraries
@@ -155,7 +143,7 @@ install_micropython_tools() {
     fi
     
     # Install ampy (alternative)
-    if ! command -v ampy >/dev/null 2&1; then
+    if ! command -v ampy >/dev/null 2>&1; then
         pip3 install adafruit-ampy || pip install adafruit-ampy
         log_success "ampy installed"
     else

@@ -2,7 +2,9 @@
 set -e
 
 PORT="$1"
-FIRMWARE="${HOME}/.claude/skills/unihiker-k10/firmware/k10-micropython-v0.9.2.bin"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+FIRMWARE="${SKILL_DIR}/firmware/k10-micropython-v0.9.2.bin"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -31,7 +33,6 @@ check_dependencies() {
 detect_port() {
     if [[ -z "$PORT" ]]; then
         log_info "Auto-detecting K10 port..."
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
         PORT=$(bash "${SCRIPT_DIR}/find-port.sh" 2>/dev/null || true)
         if [[ -z "$PORT" ]]; then
             log_error "Could not auto-detect K10 port"

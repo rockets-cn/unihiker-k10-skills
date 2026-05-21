@@ -8,7 +8,7 @@ set -e
 
 SKETCH="$1"
 PORT="$2"
-FQBN="${3:-unihiker:k10:k10}"
+FQBN="${3:-UNIHIKER:esp32:k10}"
 
 # Colors
 RED='\033[0;31m'
