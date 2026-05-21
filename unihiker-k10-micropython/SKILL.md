@@ -39,6 +39,7 @@ screen.show_draw()
 **Important:**
 - **Auto-execution**: Only `main.py` runs automatically on boot. Other filenames (e.g., `test.py`) must be imported or run via REPL
 - **Best practice**: Name your entry file as `main.py` for auto-start
+- **Screen refresh**: 能尽量用局部刷新的就不用全局刷新。
 - **Reference**: [`references/micropython-api.md`](references/micropython-api.md)
 
 ## Common Issues

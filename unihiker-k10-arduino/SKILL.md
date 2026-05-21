@@ -172,6 +172,7 @@ void loop() {
 **Important:**
 - **File structure**: `.ino` file must be in a directory with the same name (e.g., `star/star.ino`)
 - **Canvas API**: All canvas methods use `k10.canvas->`, not `k10.`
+- **Screen refresh**: 能尽量用局部刷新的就不用全局刷新。
 - **FQBN**: `UNIHIKER:esp32:k10`
 - **Reference**: [`references/arduino-api.md`](references/arduino-api.md)
 
