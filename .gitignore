@@ -1,0 +1,6 @@
+.DS_Store
+build/
+*.tmp
+*.log
+__pycache__/
+*.py[cod]
