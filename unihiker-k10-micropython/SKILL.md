@@ -39,7 +39,7 @@ screen.show_draw()
 **Important:**
 - **Auto-execution**: Only `main.py` runs automatically on boot. Other filenames (e.g., `test.py`) must be imported or run via REPL
 - **Best practice**: Name your entry file as `main.py` for auto-start
-- **Screen refresh**: 能尽量用局部刷新的就不用全局刷新。
+- **Screen refresh**: 能尽量用局部刷新的就不用全局刷新；频繁全屏清除会导致显示闪烁和卡顿。
 - **Reference**: [`references/micropython-api.md`](references/micropython-api.md)
 
 ## Common Issues
@@ -51,6 +51,7 @@ screen.show_draw()
 | **mpremote: could not enter raw repl** | K10 is running Arduino, flash MicroPython firmware first |
 | Port not found | `k10-micropython ports` or hold BOOT while connecting |
 | **AI + WiFi conflict** | Use only one in V0.9.2 |
+| **屏幕闪烁** | 使用局部刷新，避免循环中频繁调用 `screen.clear()` 或整屏 `screen.show_bg()` |
 | **Windows PowerShell执行策略限制** | 运行 `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
 
 ## 开发经验教训
@@ -182,6 +183,47 @@ mpremote connect /dev/cu.usbmodem2201 repl
 **Note on AI:**
 - AI functionality is resource-intensive in V0.9.2 firmware
 - AI + WiFi conflict: Use only one at a time to avoid memory overflow
+
+## Performance Tips
+
+### Screen Rendering Optimization
+
+K10 的屏幕刷新率有限。循环动画、传感器数值刷新、倒计时、状态提示等场景中，如果每帧都调用 `screen.clear()` 或整屏 `screen.show_bg()`，屏幕容易出现闪烁、卡顿，并增加无效绘制开销。默认采用**局部刷新**：
+
+**核心原则：**
+1. 静态背景只绘制一次
+2. 只擦除和重绘发生变化的区域
+3. 用背景色覆盖旧内容，再在同一区域绘制新内容
+4. 只在完成本轮局部绘制后调用一次 `screen.show_draw()`
+
+**避免：**
+
+```python
+while True:
+    screen.clear()
+    screen.draw_text(text=str(value), x=10, y=20, font_size=24, color=0xFFFFFF)
+    screen.show_draw()
+```
+
+**推荐：**
+
+```python
+last_text = ""
+
+screen.show_bg(color=0x000000)
+screen.draw_text(text="Value:", x=10, y=20, font_size=24, color=0xFFFFFF)
+screen.show_draw()
+
+while True:
+    text = str(value)
+    if text != last_text:
+        screen.draw_rect(x=100, y=20, w=80, h=28, bcolor=0x000000, fcolor=0x000000)
+        screen.draw_text(text=text, x=100, y=20, font_size=24, color=0x00FF00)
+        screen.show_draw()
+        last_text = text
+```
+
+整屏刷新只用于页面切换、初始化、退出清理等低频场景；高频更新必须优先局部刷新，防止显示闪烁。
 
 ## Example: Face Recognition with LED Feedback
 
