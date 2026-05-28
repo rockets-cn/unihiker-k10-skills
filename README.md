@@ -39,9 +39,25 @@ Restart Codex after installing or updating skills so it can reload the skill met
    arduino-cli core install UNIHIKER:esp32
    ```
 
-2. Create a sketch in a same-named directory, for example `hello/hello.ino`.
+2. Optional: enable Arduino CLI's official build cache for faster repeated compiles:
 
-3. Upload with the helper script:
+   ```bash
+   arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
+   arduino-cli config set build_cache.compilations_before_purge 0
+   ```
+
+   On Windows PowerShell:
+
+   ```powershell
+   arduino-cli config set build_cache.path "$env:LOCALAPPDATA\arduino\build-cache"
+   arduino-cli config set build_cache.compilations_before_purge 0
+   ```
+
+   Avoid documenting `compiler.cache.*` or `ccache` as standard Arduino CLI setup; current Arduino CLI uses `build_cache.*`.
+
+3. Create a sketch in a same-named directory, for example `hello/hello.ino`.
+
+4. Upload with the helper script:
 
    ```bash
    bash unihiker-k10-arduino/scripts/upload-arduino.sh hello/hello.ino /dev/cu.usbmodem2201

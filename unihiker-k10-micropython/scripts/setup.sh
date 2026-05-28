@@ -102,6 +102,19 @@ configure_arduino_cli() {
         log_info "Adding Unihiker board manager URL..."
         arduino-cli config add board_manager.additional_urls "$K10_BOARD_MANAGER_URL"
     fi
+
+    # Keep Arduino CLI's official build cache long-lived for faster repeat compiles.
+    local cache_path
+    case $OS in
+        windows)
+            cache_path="${LOCALAPPDATA:-${HOME}/AppData/Local}/arduino/build-cache"
+            ;;
+        *)
+            cache_path="${XDG_CACHE_HOME:-${HOME}/.cache}/arduino-build-cache"
+            ;;
+    esac
+    arduino-cli config set build_cache.path "$cache_path" >/dev/null 2>&1 || true
+    arduino-cli config set build_cache.compilations_before_purge 0 >/dev/null 2>&1 || true
     
     log_success "arduino-cli configured"
 }

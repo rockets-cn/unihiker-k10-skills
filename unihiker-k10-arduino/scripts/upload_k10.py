@@ -14,9 +14,10 @@ def find_arduino_cli():
     """Find arduino-cli executable"""
     # Check PATH
     for path in os.environ.get('PATH', '').split(os.pathsep):
-        exe = os.path.join(path, 'arduino-cli.exe')
-        if os.path.isfile(exe):
-            return exe
+        for name in ('arduino-cli.exe', 'arduino-cli'):
+            exe = os.path.join(path, name)
+            if os.path.isfile(exe):
+                return exe
     
     # Check common locations
     possible_paths = [
@@ -103,8 +104,8 @@ def main():
     
     # Compile
     print("[INFO] Compiling...")
-    result = subprocess.run([arduino_cli, "compile", "--fqbn", fqbn, 
-                            "--build-path", build_dir, sketch_path])
+    result = subprocess.run([arduino_cli, "compile", "--fqbn", fqbn,
+                            "--build-path", build_dir, "--jobs", "0", sketch_path])
     if result.returncode != 0:
         print("[ERROR] Compilation failed")
         sys.exit(1)

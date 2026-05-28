@@ -62,7 +62,7 @@ echo [INFO] Port: %PORT%
 
 :: Compile
 echo [INFO] Compiling...
-arduino-cli compile --fqbn %FQBN% --build-path "%BUILD_DIR%" "%SKETCH%"
+arduino-cli compile --fqbn %FQBN% --build-path "%BUILD_DIR%" --jobs 0 "%SKETCH%"
 if %errorlevel% neq 0 (
     echo [ERROR] Compilation failed
     exit /b 1

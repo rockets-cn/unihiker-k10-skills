@@ -91,7 +91,7 @@ Write-Info "Port: $Port"
 
 # Compile
 Write-Info "Compiling..."
-& $arduinoCli compile --fqbn $FQBN --build-path $BuildDir $SketchPath
+& $arduinoCli compile --fqbn $FQBN --build-path $BuildDir --jobs 0 $SketchPath
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Compilation failed"
     exit 1

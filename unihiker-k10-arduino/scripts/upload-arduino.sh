@@ -51,7 +51,7 @@ log_info "Compiling $SKETCH_NAME for $FQBN..."
 log_info "Build directory: $BUILD_DIR"
 
 # Compile
-if ! arduino-cli compile --fqbn "$FQBN" --build-path "$BUILD_DIR" "$SKETCH"; then
+if ! arduino-cli compile --fqbn "$FQBN" --build-path "$BUILD_DIR" --jobs 0 "$SKETCH"; then
     log_error "Compilation failed"
     exit 1
 fi

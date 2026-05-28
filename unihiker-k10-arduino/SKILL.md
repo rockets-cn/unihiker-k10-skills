@@ -119,9 +119,36 @@ UNIHIKER:esp32:k10
 
 **注意:** BSP包大小约500MB，首次下载需要较长时间。
 
+### Step 4: Configure Arduino CLI Build Cache (Optional)
+
+Arduino CLI has a built-in compilation cache. For repeated K10 builds, use the official `build_cache.*` configuration keys and keep build artifacts in a stable directory.
+
+**Linux/macOS:**
+```bash
+arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+**Windows PowerShell:**
+```powershell
+arduino-cli config set build_cache.path "$env:LOCALAPPDATA\arduino\build-cache"
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+For manual compiles, prefer:
+
+```bash
+arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
+  --build-path .arduino-build \
+  --output-dir build \
+  --jobs 0
+```
+
+Do not rely on `compiler.cache.enable`, `compiler.cache.path`, or `ccache` as standard K10 setup. They are not part of the current Arduino CLI configuration reference.
+
 ### Verification
 
-After completing Steps 1-3, verify your environment:
+After completing Steps 1-4, verify your environment:
 
 ```bash
 # Check arduino-cli
@@ -183,6 +210,7 @@ void loop() {
 | **arduino-cli: command not found** | Windows用户使用skill目录下的arduino-cli.exe，或安装并添加到PATH |
 | **Platform 'UNIHIKER:esp32:k10' not found** | 安装K10 BSP: `arduino-cli core install UNIHIKER:esp32` |
 | **Can't open sketch: main file missing** | `.ino`文件必须放在同名目录中 (如 `star/star.ino`) |
+| **Repeated compile still slow** | Use stable `--build-path`, enable official `build_cache.*`, and avoid `--clean` unless a full rebuild is required |
 | **Class has no member named 'canvasLine'** | Canvas方法使用 `k10.canvas->`，不是 `k10.` |
 | **编译错误: No such file or directory** | 检查库依赖，部分库需要手动安装到Documents/Arduino/libraries |
 | **上传失败/无法连接** | 按住BOOT按钮，按RST重置，释放BOOT进入下载模式 |
@@ -214,6 +242,25 @@ bash scripts/upload-arduino.sh ./your_sketch/your_sketch.ino
 ```
 
 ## Performance Tips
+
+### Arduino CLI Compile Speed
+
+The upload helpers already compile into a stable sketch-local `build/` directory and use all CPU cores when supported by Arduino CLI. For manual builds:
+
+```bash
+arduino-cli compile --fqbn UNIHIKER:esp32:k10 path/to/sketch \
+  --build-path path/to/sketch/build \
+  --jobs 0
+```
+
+Keep `build_cache.path` configured for long-lived cache reuse:
+
+```bash
+arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+`--clean` intentionally skips cached artifacts and should be reserved for suspicious build state or toolchain changes.
 
 ### Screen Rendering Optimization
 
