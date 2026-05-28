@@ -162,14 +162,25 @@ arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
 arduino-cli upload -p COM4 --fqbn UNIHIKER:esp32:k10 .
 ```
 
+Use the serial port name for your operating system:
+
+| OS | Example port |
+|----|--------------|
+| Windows | `COM4` |
+| macOS | `/dev/cu.usbmodem1101` |
+| Linux | `/dev/ttyACM0` |
+
 ### Subsequent Updates (WiFi OTA)
 
 ```bash
 # Compile only
 arduino-cli compile --fqbn UNIHIKER:esp32:k10 . --output-dir build
 
-# Upload via HTTP
+# Upload via HTTP with curl
 curl -F "file=@build/your_sketch.ino.bin" http://192.168.9.42/ota
+
+# Or use the cross-platform Python uploader
+python scripts/ota_upload.py build/your_sketch.ino.bin --ip 192.168.9.42
 ```
 
 ---

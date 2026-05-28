@@ -103,14 +103,14 @@ After the first USB upload, use any of these methods:
 curl -F "file=@build/your_sketch.ino.bin" http://192.168.9.42/ota
 ```
 
-**Python script (provided in this skill):**
+**Python script (works on Windows, macOS, and Linux):**
 ```bash
 python scripts/ota_upload.py build/your_sketch.ino.bin --ip 192.168.9.42
 ```
 
-**PowerShell:**
+**PowerShell 7+ (works on Windows, macOS, and Linux):**
 ```powershell
-.\scripts\ota_upload.ps1 -Bin build\your_sketch.ino.bin -Ip 192.168.9.42
+pwsh ./scripts/ota_upload.ps1 -Bin build/your_sketch.ino.bin -Ip 192.168.9.42
 ```
 
 ## Important Notes
