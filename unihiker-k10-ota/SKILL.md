@@ -45,7 +45,33 @@ Compile with the custom partition:
 
 ```bash
 arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
+  --output-dir build \
   --build-property "build.partitions=custom"
+```
+
+Optional speed-up for repeated compiles:
+
+```bash
+# Use all CPU cores and keep build artifacts in stable project-local folders.
+arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
+  --build-path .arduino-build \
+  --output-dir build \
+  --build-property "build.partitions=custom" \
+  -j 0
+```
+
+Arduino CLI already has a built-in `build_cache`. To use a longer-lived cache, configure the official `build_cache.*` keys rather than `compiler.cache.*`:
+
+```bash
+arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+On Windows PowerShell:
+
+```powershell
+arduino-cli config set build_cache.path "$env:LOCALAPPDATA\arduino\build-cache"
+arduino-cli config set build_cache.compilations_before_purge 0
 ```
 
 ### Step 2: Add OTA Endpoint to Firmware
@@ -119,6 +145,7 @@ pwsh ./scripts/ota_upload.ps1 -Bin build/your_sketch.ino.bin -Ip 192.168.9.42
 - **Every OTA-enabled sketch must include the OTA code.** If you upload a sketch without `/ota` handler, you lose OTA capability and must return to USB.
 - **Do not use `delay()` in `loop()` for long periods.** Use non-blocking `millis()` patterns so the WebServer can process the upload request.
 - **Content-Length:** Arduino WebServer's `server.header("Content-Length")` does not work in POST handlers. Use `server.clientContentLength()` instead if you need the raw body size.
+- **Compile cache:** Use Arduino CLI's official `build_cache.*` settings and `--build-path` for repeat builds. Do not document `compiler.cache.enable`, `compiler.cache.path`, or `ccache` as required OTA setup because they are not part of the current Arduino CLI configuration reference.
 
 ## Files
 

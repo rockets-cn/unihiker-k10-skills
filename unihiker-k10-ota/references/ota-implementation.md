@@ -74,6 +74,45 @@ The first USB upload after this change will write the new partition table to fla
 
 ---
 
+## Optional: Speed Up Repeated Compiles
+
+Arduino CLI has its own build cache. The reliable, current configuration keys are under `build_cache.*`:
+
+```bash
+# Linux/macOS
+arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+```powershell
+# Windows PowerShell
+arduino-cli config set build_cache.path "$env:LOCALAPPDATA\arduino\build-cache"
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+For project-local repeat builds, keep the intermediate build folder stable and let Arduino CLI use all CPU cores:
+
+```bash
+arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
+  --build-path .arduino-build \
+  --output-dir build \
+  --build-property "build.partitions=custom" \
+  -j 0
+```
+
+Use `--clean` only when you need a full rebuild; it deliberately bypasses cached build artifacts.
+
+`ccache` can help in some C/C++ toolchains, but it is not a documented Arduino CLI configuration path in current releases. Avoid treating these as standard Arduino CLI settings:
+
+```bash
+arduino-cli config set compiler.cache.enable true
+arduino-cli config set compiler.cache.path /path/to/ccache
+```
+
+The current Arduino CLI command reference also does not list `compile --build-cache-path`, so prefer persistent `build_cache.path` configuration plus a stable `--build-path`.
+
+---
+
 ## Firmware Code Changes
 
 ### 1. Include Update Library
@@ -155,7 +194,9 @@ void loop() {
 ```bash
 # Compile with custom partition table
 arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
+  --build-path .arduino-build \
   --output-dir build \
+  -j 0 \
   --build-property "build.partitions=custom"
 
 # Upload via USB (also flashes the new partition table)
@@ -174,7 +215,7 @@ Use the serial port name for your operating system:
 
 ```bash
 # Compile only
-arduino-cli compile --fqbn UNIHIKER:esp32:k10 . --output-dir build
+arduino-cli compile --fqbn UNIHIKER:esp32:k10 . --build-path .arduino-build --output-dir build -j 0
 
 # Upload via HTTP with curl
 curl -F "file=@build/your_sketch.ino.bin" http://192.168.9.42/ota
