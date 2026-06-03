@@ -1,6 +1,6 @@
 ---
 name: unihiker-k10-ota
-description: Add HTTP OTA (Over-The-Air) firmware update capability to Unihiker K10 Arduino projects. Use when you need wireless firmware updates without USB cable.
+description: Add HTTP OTA (Over-The-Air) firmware update capability to Unihiker K10 Arduino projects, including AP/STA projects and ESP-NOW projects that need a safe OTA maintenance mode. Use when you need wireless firmware updates without USB cable, when ArduinoOTA fails, or when an ESP-NOW sketch must keep an OTA recovery/update path.
 ---
 
 # Unihiker K10 - HTTP OTA
@@ -25,6 +25,20 @@ Enable wireless firmware updates for K10 Arduino projects via HTTP POST.
 - Existing K10 Arduino project with `WebServer` running
 - `arduino-cli` installed and K10 BSP (`UNIHIKER:esp32:k10`) available
 - Device and computer on the same network (or connected to K10's AP)
+
+## ESP-NOW Compatibility Rule
+
+ESP-NOW sketches can support OTA, but ordinary HTTP OTA requires temporary IP networking through `WIFI_AP`, `WIFI_STA`, or `WIFI_AP_STA`. ESP-NOW itself is not an IP transport, so do not claim that the standard `/ota` HTTP endpoint works over pure ESP-NOW packets.
+
+When adding OTA to an ESP-NOW program, use this policy:
+
+1. Prefer a **maintenance OTA mode**: normal runtime uses ESP-NOW; a button, serial command, saved flag, or received command enters OTA mode, starts AP or STA networking, registers `/ota`, and services `server.handleClient()`.
+2. Keep ESP-NOW and WiFi on the same channel if they run together. If STA connects to a router, the router determines the channel; ESP-NOW peers must use that channel or peer channel `0`.
+3. For reliability, pause ESP-NOW sends and time-critical control loops while an OTA upload is active.
+4. Keep an AP fallback such as `K10-OTA-<id>` available in OTA mode so updates still work when STA credentials are missing or the router changes.
+5. Treat pure ESP-NOW firmware transfer as an advanced separate design. It needs packet chunking, acknowledgements, image validation, and writes to OTA partitions; do not replace HTTP OTA with it unless the user explicitly asks for ESP-NOW-only OTA.
+
+See `references/ota-implementation.md` for the ESP-NOW maintenance-mode code pattern.
 
 ## Quick Start
 
@@ -112,6 +126,31 @@ void handleOtaUpload() {
 server.on("/ota", HTTP_POST, handleOta, handleOtaUpload);
 ```
 
+For ESP-NOW sketches, do not leave OTA as an afterthought. Add an explicit OTA mode gate:
+
+```cpp
+bool otaMode = false;
+bool otaUploadActive = false;
+
+void enterOtaMode() {
+  otaMode = true;
+  WiFi.mode(WIFI_AP_STA);  // AP fallback plus optional STA
+  WiFi.softAP("K10-OTA", "12345678");
+  // Optional: WiFi.begin(savedSsid, savedPassword);
+  server.on("/ota", HTTP_POST, handleOta, handleOtaUpload);
+  server.begin();
+}
+
+void loop() {
+  if (otaMode) {
+    server.handleClient();
+    return;  // keep ESP-NOW/control traffic paused during OTA maintenance
+  }
+
+  // normal ESP-NOW runtime
+}
+```
+
 ### Step 3: First USB Upload (Required Once)
 
 The first upload must be via USB to flash the new partition table:
@@ -146,6 +185,7 @@ pwsh ./scripts/ota_upload.ps1 -Bin build/your_sketch.ino.bin -Ip 192.168.9.42
 - **Do not use `delay()` in `loop()` for long periods.** Use non-blocking `millis()` patterns so the WebServer can process the upload request.
 - **Content-Length:** Arduino WebServer's `server.header("Content-Length")` does not work in POST handlers. Use `server.clientContentLength()` instead if you need the raw body size.
 - **Compile cache:** Use Arduino CLI's official `build_cache.*` settings and `--build-path` for repeat builds. Do not document `compiler.cache.enable`, `compiler.cache.path`, or `ccache` as required OTA setup because they are not part of the current Arduino CLI configuration reference.
+- **ESP-NOW:** HTTP OTA needs AP/STA networking. If the program uses ESP-NOW, add an OTA maintenance mode, manage WiFi channel alignment, and pause ESP-NOW traffic while flashing.
 
 ## Files
 
@@ -168,3 +208,6 @@ unihiker-k10-ota/
 | `NO_CONTENT` | `Content-Length` header missing | Ensure client sends valid `multipart/form-data` with file data |
 | Device does not restart | `ESP.restart()` called before response sent | Use `scheduleRestart()` with a small delay instead |
 | Network port not found | mDNS/ArduinoOTA not running | HTTP OTA does not need network port detection; use the device's IP directly |
+| ESP-NOW works until STA starts | STA changed the radio channel to the router channel | Put peers on the same channel or use peer channel `0` after STA connects |
+| OTA page unreachable in ESP-NOW sketch | Sketch never entered AP/STA maintenance mode | Add a button/serial/command path that calls `enterOtaMode()` and starts the WebServer |
+| ESP-NOW packets drop during OTA | Flashing and HTTP handling are competing with runtime traffic | Pause ESP-NOW sends/control loops while `otaUploadActive` or `otaMode` is true |

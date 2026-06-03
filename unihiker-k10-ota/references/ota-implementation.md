@@ -5,9 +5,10 @@
 1. [Why HTTP OTA Instead of ArduinoOTA](#why-http-ota)
 2. [Partition Table Requirements](#partition-table)
 3. [Firmware Code Changes](#firmware-code)
-4. [Build and Upload Workflow](#build-upload)
-5. [OTA Update Workflow](#ota-update)
-6. [Reference: Complete Minimal Example](#minimal-example)
+4. [ESP-NOW Projects](#esp-now-projects)
+5. [Build and Upload Workflow](#build-upload)
+6. [OTA Update Workflow](#ota-update)
+7. [Reference: Complete Minimal Example](#minimal-example)
 
 ---
 
@@ -184,6 +185,155 @@ void loop() {
   }
 }
 ```
+
+---
+
+## ESP-NOW Projects
+
+HTTP OTA can coexist with ESP-NOW, but not as a pure ESP-NOW transport. The OTA web endpoint needs an IP interface, so an ESP-NOW sketch must temporarily enable AP, STA, or AP+STA networking while accepting the firmware upload.
+
+### Recommended Pattern: OTA Maintenance Mode
+
+Use normal runtime for ESP-NOW. Enter OTA mode only when needed:
+
+- Button long press during boot or runtime
+- Serial command such as `ota`
+- Saved `Preferences` flag set by a previous command
+- Trusted ESP-NOW command from a controller node
+- Local web/admin command if the sketch already has a WebServer
+
+In OTA mode:
+
+1. Stop or pause periodic ESP-NOW sends.
+2. Start `WIFI_AP` or `WIFI_AP_STA`.
+3. Start the WebServer and register `/ota`.
+4. Call `server.handleClient()` frequently.
+5. Mark `otaUploadActive = true` during upload writes.
+6. Restart after a successful update.
+
+Minimal pattern:
+
+```cpp
+#include <WiFi.h>
+#include <WebServer.h>
+#include <Update.h>
+#include <esp_now.h>
+
+WebServer server(80);
+
+bool otaMode = false;
+bool otaUploadActive = false;
+bool restartPending = false;
+uint32_t restartAtMs = 0;
+
+void scheduleRestart() {
+  restartPending = true;
+  restartAtMs = millis() + 1200;
+}
+
+void handleOta() {
+  server.sendHeader("Connection", "close");
+  server.send(200, "text/plain", Update.hasError() ? "FAIL" : "OK");
+  if (!Update.hasError()) {
+    scheduleRestart();
+  }
+}
+
+void handleOtaUpload() {
+  HTTPUpload &upload = server.upload();
+
+  if (upload.status == UPLOAD_FILE_START) {
+    otaUploadActive = true;
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+      Update.printError(Serial);
+    }
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+      Update.printError(Serial);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (!Update.end(true)) {
+      Update.printError(Serial);
+    }
+    otaUploadActive = false;
+  } else if (upload.status == UPLOAD_FILE_ABORTED) {
+    Update.abort();
+    otaUploadActive = false;
+  }
+}
+
+void enterOtaMode() {
+  otaMode = true;
+
+  // Prefer an AP fallback so OTA still works when router credentials are wrong.
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAP("K10-OTA", "12345678");
+
+  // Optional: also connect to infrastructure WiFi.
+  // WiFi.begin(savedSsid, savedPassword);
+
+  server.on("/ota", HTTP_POST, handleOta, handleOtaUpload);
+  server.begin();
+
+  Serial.print("OTA AP IP: ");
+  Serial.println(WiFi.softAPIP());
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Example gate: hold a button at boot, read Preferences, or parse Serial.
+  bool requestedOtaMode = false;
+
+  if (requestedOtaMode) {
+    enterOtaMode();
+    return;
+  }
+
+  WiFi.mode(WIFI_STA);
+  // Set channel before esp_now_init() if the deployment uses a fixed ESP-NOW channel.
+  // esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+  esp_now_init();
+}
+
+void loop() {
+  if (otaMode) {
+    server.handleClient();
+    if (restartPending && millis() >= restartAtMs) {
+      ESP.restart();
+    }
+    return;
+  }
+
+  if (!otaUploadActive) {
+    // Normal ESP-NOW runtime here.
+  }
+}
+```
+
+### Channel Rules
+
+ESP-NOW and WiFi share one 2.4 GHz radio:
+
+- If the device is only in `WIFI_STA` and does not connect to a router, set a fixed channel before `esp_now_init()`.
+- If STA connects to a router, the router decides the channel. ESP-NOW peers must use that same channel.
+- Peer channel `0` means "use the current WiFi channel" and is useful when the local device follows the AP/STA channel.
+- Avoid hidden channel changes while ESP-NOW peers are active; reconnecting STA may move the radio and break peers on the old channel.
+
+For K10 OTA work, prefer this practical rule: in normal ESP-NOW mode use a known channel; in OTA maintenance mode pause ESP-NOW and allow AP/STA networking to own the radio.
+
+### Pure ESP-NOW OTA
+
+Pure ESP-NOW OTA is possible but should be treated as a separate advanced feature, not the default for this skill. It requires:
+
+- Firmware chunking small enough for ESP-NOW payload limits
+- Sequence numbers and acknowledgements
+- Retry, resume, and timeout handling
+- Image size and checksum validation before boot switch
+- Writes through `Update` or ESP-IDF OTA APIs into the inactive OTA partition
+- A secure authorization model so arbitrary peers cannot flash the device
+
+Use pure ESP-NOW OTA only when the user explicitly needs updates without AP/STA IP networking. Otherwise, use HTTP OTA maintenance mode.
 
 ---
 
