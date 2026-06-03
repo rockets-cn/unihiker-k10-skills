@@ -101,20 +101,26 @@ The K10 BSP is required for arduino-cli to recognize the Unihiker K10 board.
 
 #### 国内镜像（中国大陆用户必配）
 
-K10 BSP 依赖 ESP32 Arduino Core。默认从 GitHub 下载，国内速度极慢。**必须配置国内镜像：**
+K10 BSP 依赖 ESP32 Arduino Core。默认从 GitHub 下载，国内速度极慢。**必须配置国内镜像。** UNIHIKER K10 使用 ESP32 Core 稳定版即可。
 
 ```bash
 # K10 BSP — DFRobot 国内 CDN
 arduino-cli config add board_manager.additional_urls https://downloadcd.dfrobot.com.cn/UNIHIKER/package_unihiker_index.json
 
-# ESP32 Arduino Core — 乐鑫官方 CDN
-arduino-cli config add board_manager.additional_urls https://dl.espressif.com/dl/package_esp32_index.json
+# ESP32 Arduino Core — 稳定版（推荐）
+arduino-cli config add board_manager.additional_urls https://jihulab.com/esp-mirror/espressif/arduino-esp32/-/raw/gh-pages/package_esp32_index_cn.json
+```
+
+如果需要直接替换已有 ESP32 Core 镜像，可参考下面命令。注意 `config set board_manager.additional_urls` 会覆盖现有 `additional_urls` 配置；执行后请确认 K10 BSP URL 仍存在，不存在就重新 `config add` 上面的 DFRobot URL。
+
+```bash
+arduino-cli config set board_manager.additional_urls https://jihulab.com/esp-mirror/espressif/arduino-esp32/-/raw/gh-pages/package_esp32_index_cn.json
 ```
 
 配置完成后验证：
 ```bash
 arduino-cli config dump | grep additional_urls
-# 应输出两条 URL
+# 应输出 K10 BSP 与 ESP32 Core 镜像 URL
 ```
 
 #### 安装 BSP
