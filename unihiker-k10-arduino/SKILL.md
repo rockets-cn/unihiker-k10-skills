@@ -99,26 +99,43 @@ sudo mv arduino-cli /usr/local/bin/
 
 The K10 BSP is required for arduino-cli to recognize the Unihiker K10 board.
 
+#### 国内镜像（中国大陆用户必配）
+
+K10 BSP 依赖 ESP32 Arduino Core。默认从 GitHub 下载，国内速度极慢。**必须配置国内镜像：**
+
 ```bash
-# Add K10 BSP URL to arduino-cli
+# K10 BSP — DFRobot 国内 CDN
 arduino-cli config add board_manager.additional_urls https://downloadcd.dfrobot.com.cn/UNIHIKER/package_unihiker_index.json
 
-# Update core index
+# ESP32 Arduino Core — 乐鑫官方 CDN
+arduino-cli config add board_manager.additional_urls https://dl.espressif.com/dl/package_esp32_index.json
+```
+
+配置完成后验证：
+```bash
+arduino-cli config dump | grep additional_urls
+# 应输出两条 URL
+```
+
+#### 安装 BSP
+
+```bash
+# Refresh core index（国内镜像环境下较快）
 arduino-cli core update-index
 
-# Install K10 core
+# Install K10 core（约 500MB，首次约 5-10 分钟）
 arduino-cli core install UNIHIKER:esp32
 
 # Verify installation
-arduino-cli board listall | findstr unihiker
+arduino-cli board listall | grep unihiker
 ```
 
 **Expected output:**
-```bash
+```
 UNIHIKER:esp32:k10
 ```
 
-**注意:** BSP包大小约500MB，首次下载需要较长时间。
+**注意:** 即使使用镜像，BSP 包约 500MB 首次仍需较长时间。建议配合 [Step 4 的 build_cache](#step-4-configure-build-cache-recommended) 避免反复下载。
 
 ### Step 4: Configure Build Cache (Recommended)
 
