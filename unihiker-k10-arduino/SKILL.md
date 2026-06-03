@@ -99,34 +99,40 @@ sudo mv arduino-cli /usr/local/bin/
 
 The K10 BSP is required for arduino-cli to recognize the Unihiker K10 board.
 
-#### 国内镜像（中国大陆用户必配）
+#### Board Manager URLs
 
-K10 BSP 依赖 ESP32 Arduino Core。默认从 GitHub 下载，国内速度极慢。**必须配置国内镜像。** UNIHIKER K10 使用 ESP32 Core 稳定版即可。
+K10 BSP 依赖 ESP32 Arduino Core。UNIHIKER K10 使用 ESP32 Core 稳定版即可。按网络环境二选一配置：
+
+**中国大陆用户（推荐国内镜像）**
 
 ```bash
 # K10 BSP — DFRobot 国内 CDN
 arduino-cli config add board_manager.additional_urls https://downloadcd.dfrobot.com.cn/UNIHIKER/package_unihiker_index.json
 
-# ESP32 Arduino Core — 稳定版（推荐）
+# ESP32 Arduino Core — 稳定版国内镜像
 arduino-cli config add board_manager.additional_urls https://jihulab.com/esp-mirror/espressif/arduino-esp32/-/raw/gh-pages/package_esp32_index_cn.json
 ```
 
-如果需要直接替换已有 ESP32 Core 镜像，可参考下面命令。注意 `config set board_manager.additional_urls` 会覆盖现有 `additional_urls` 配置；执行后请确认 K10 BSP URL 仍存在，不存在就重新 `config add` 上面的 DFRobot URL。
+**国外用户（官方源）**
 
 ```bash
-arduino-cli config set board_manager.additional_urls https://jihulab.com/esp-mirror/espressif/arduino-esp32/-/raw/gh-pages/package_esp32_index_cn.json
+# K10 BSP — DFRobot
+arduino-cli config add board_manager.additional_urls https://downloadcd.dfrobot.com.cn/UNIHIKER/package_unihiker_index.json
+
+# ESP32 Arduino Core — Espressif official stable index
+arduino-cli config add board_manager.additional_urls https://dl.espressif.com/dl/package_esp32_index.json
 ```
 
 配置完成后验证：
 ```bash
 arduino-cli config dump | grep additional_urls
-# 应输出 K10 BSP 与 ESP32 Core 镜像 URL
+# 应输出 K10 BSP 与 ESP32 Core URL
 ```
 
 #### 安装 BSP
 
 ```bash
-# Refresh core index（国内镜像环境下较快）
+# Refresh core index
 arduino-cli core update-index
 
 # Install K10 core（约 500MB，首次约 5-10 分钟）
