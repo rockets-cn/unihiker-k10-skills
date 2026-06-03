@@ -1,5 +1,6 @@
 ---
 name: unihiker-k10-arduino
+version: 0.9.3
 description: Use when programming Unihiker K10 board with Arduino/C++, uploading code, flashing firmware, or accessing K10 Arduino APIs (screen, sensors, RGB, audio, AI, TTS, ASR)
 ---
 
@@ -119,15 +120,9 @@ UNIHIKER:esp32:k10
 
 **注意:** BSP包大小约500MB，首次下载需要较长时间。
 
-### Step 4: Configure Arduino CLI Build Cache (Optional)
+### Step 4: Configure Build Cache (Recommended)
 
-Arduino CLI has a built-in compilation cache. For repeated K10 builds, use the official `build_cache.*` configuration keys and keep build artifacts in a stable directory.
-
-**Linux/macOS:**
-```bash
-arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
-arduino-cli config set build_cache.compilations_before_purge 0
-```
+Arduino CLI has a built-in compilation cache. For repeated K10 builds, use the official `build_cache.*` configuration keys and keep build artifacts in a stable directory. **This is strongly recommended** — without it, every compile rebuilds the entire BSP (~500 MB) from scratch.
 
 **Windows PowerShell:**
 ```powershell
@@ -135,14 +130,57 @@ arduino-cli config set build_cache.path "$env:LOCALAPPDATA\arduino\build-cache"
 arduino-cli config set build_cache.compilations_before_purge 0
 ```
 
-For manual compiles, prefer:
+**Linux/macOS:**
+```bash
+arduino-cli config set build_cache.path ~/.cache/arduino-build-cache
+arduino-cli config set build_cache.compilations_before_purge 0
+```
+
+#### Optimized Compile Command
+
+Use these flags for every compile to get incremental + parallel compilation:
+
+| Flag | Effect |
+|------|--------|
+| `--build-path .arduino-build` | Keep intermediate `.o` files; only recompile changed sources |
+| `--output-dir build` | Put final `.bin`/`.elf` in `build/` |
+| `--build-property "build.partitions=custom"` | Use project `partitions.csv` for OTA support |
+| `--jobs 0` | Use all CPU cores for parallel compilation |
 
 ```bash
 arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
   --build-path .arduino-build \
   --output-dir build \
+  --build-property "build.partitions=custom" \
   --jobs 0
 ```
+
+First compile is still slow (cold cache), but subsequent edits compile in seconds.
+
+#### Convenience Script: `compile-ota`
+
+One-shot compile + OTA upload using the optimized flags above. Two versions available:
+
+**Windows (PowerShell):**
+```powershell
+# Compile only
+.\compile-ota.ps1 ph_titrator
+
+# Compile + OTA upload
+.\compile-ota.ps1 ph_titrator -Ip 192.168.9.42
+```
+
+**macOS / Linux (Bash):**
+```bash
+# Compile only
+./compile-ota.sh ph_titrator
+
+# Compile + OTA upload
+./compile-ota.sh ph_titrator -i 192.168.9.42
+```
+
+Scripts located at `~/.agents/skills/unihiker-k10-arduino/scripts/`.
+Prerequisite: `arduino-cli` must be in PATH (macOS/Linux) or use the bundled `arduino-cli.exe` (Windows).
 
 Do not rely on `compiler.cache.enable`, `compiler.cache.path`, or `ccache` as standard K10 setup. They are not part of the current Arduino CLI configuration reference.
 
@@ -168,6 +206,7 @@ arduino-cli board list
 | `k10-arduino upload <file.ino>` | Compile & upload Arduino sketch |
 | `k10-arduino ports` | List serial ports |
 | `k10-arduino doctor` | Environment diagnostic |
+| `compile-ota.ps1 <dir> [-Ip <ip>]` | Optimized compile + optional OTA upload |
 
 ## Coding
 
