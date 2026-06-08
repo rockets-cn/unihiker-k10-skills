@@ -22,5 +22,5 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_KEY }}
         with:
-          source-repo: "git@github.com:rockets-cn/unihiker-k10-skills.git"
+          source-repo: "https://github.com/rockets-cn/unihiker-k10-skills.git"
           destination-repo: "git@gitee.com:rocketscn/unihiker-k10-skills.git"
