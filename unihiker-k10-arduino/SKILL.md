@@ -1,6 +1,5 @@
 ---
 name: unihiker-k10-arduino
-version: 0.9.4
 description: Use when programming Unihiker K10 board with Arduino/C++, uploading code, flashing firmware, or accessing K10 Arduino APIs (screen, sensors, RGB, audio, AI, TTS, ASR)
 ---
 
