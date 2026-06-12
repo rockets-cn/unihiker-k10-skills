@@ -48,20 +48,25 @@ coredump, data, coredump,,        1K,
 
 **Problem:** There is no `ota_0` / `ota_1` / `otadata` partition. `Update.begin()` fails immediately because it cannot find an inactive OTA slot to write to.
 
-**Solution:** Create `partitions.csv` in your sketch directory with OTA partitions:
+**Solution for K10 AI projects:** Create `partitions.csv` in your sketch directory with OTA partitions that stop before the model region:
 
 ```csv
-# Name,   Type, SubType, Offset,  Size, Flags
-nvs,      data, nvs,     0x9000,  0x5000,
-otadata,  data, ota,     0xe000,  0x2000,
-app0,     app,  ota_0,   0x10000, 0x640000,
-app1,     app,  ota_1,   0x650000,0x640000,
-spiffs,   data, spiffs,  0xc90000,0x370000,
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x5000,
+otadata,    data, ota,     0xe000,   0x2000,
+app0,       app,  ota_0,   0x10000,  0x280000,
+app1,       app,  ota_1,   0x290000, 0x280000,
+model,      data, spiffs,  0x510000, 4563K,
+voice_data, data, fat,     0x985000, 2542K,
+fr,         data, ,        0xC01000, 100K,
+coredump,   data, coredump,,         1K,
+spiffs,     data, spiffs,  0xC1B000, 0x3E5000,
 ```
 
-- `app0` and `app1` are each ~6.5 MB — plenty of room for the ~1.1 MB K10 titrator firmware
+- `app0` and `app1` are each 2.5 MB and end before `0x510000`
 - `otadata` is required for the bootloader to know which app partition to boot from
-- `spiffs` is reduced compared to the factory table, but still 3.5 MB
+- `model`, `voice_data`, and `fr` keep the factory offsets used by the K10 AI libraries
+- `spiffs` is moved after the model regions
 
 **Compile with the custom partition:**
 
@@ -72,6 +77,8 @@ arduino-cli compile --fqbn UNIHIKER:esp32:k10 . \
 ```
 
 The first USB upload after this change will write the new partition table to flash. This is a one-time operation.
+
+If the firmware image no longer fits in 2.5 MB, do not expand `app0` or `app1` over the model regions in an AI project. Reduce firmware size, drop OTA, or explicitly decide that the program will not use built-in AI model data.
 
 ---
 

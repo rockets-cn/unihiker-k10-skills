@@ -12,6 +12,8 @@ CLI toolkit for Unihiker K10 board Arduino programming. **Core principle:** Foll
 **Firmware Version**: 0.9.2
 **FQBN**: `UNIHIKER:esp32:k10`
 
+If a sketch uses K10 AI, voice recognition, TTS, face recognition, or OTA partitions, preserve the factory model-data offsets. Read the repository reference `references/k10-ai-model-flash.md` when available.
+
 ## When to Use
 
 - Uploading Arduino/C++ code to K10
@@ -226,6 +228,23 @@ arduino-cli board listall | findstr unihiker
 # Check ports
 arduino-cli board list
 ```
+
+### AI Model Refresh Options
+
+The K10 BSP can flash built-in AI support files during USB upload. Use this only for initialization or recovery; normal uploads should leave model data alone.
+
+```bash
+# Normal upload: do not rewrite model partitions
+arduino-cli upload -p <PORT> --fqbn UNIHIKER:esp32:k10:Model=None <sketch>
+
+# Refresh Chinese model data
+arduino-cli upload -p <PORT> --fqbn UNIHIKER:esp32:k10:Model=Hi_eps <sketch>
+
+# Refresh English model data
+arduino-cli upload -p <PORT> --fqbn UNIHIKER:esp32:k10:Model=Ni_hao_xiao_zhi <sketch>
+```
+
+The BSP menu labels are confusing but intentional: `Hi_eps` is shown as `CN`, and `Ni_hao_xiao_zhi` is shown as `EN`.
 
 ## Commands
 

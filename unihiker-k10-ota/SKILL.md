@@ -13,6 +13,8 @@ Enable wireless firmware updates for K10 Arduino projects via HTTP POST.
 
 **Why not ArduinoOTA?** The standard `ArduinoOTA` library (UDP-based) requires the ESP32 to connect back to the host computer on a random port, which is often blocked by Windows Firewall. HTTP OTA uses a simple host→device upload direction and works reliably on all networks.
 
+**AI model rule:** K10 built-in AI support files live in fixed flash regions beginning at `0x510000`. OTA partitions must end before that address if the project uses voice recognition, TTS, face recognition, or other built-in AI features.
+
 ## When to Use
 
 - Your K10 is installed in a location difficult to reach with USB
@@ -47,12 +49,18 @@ See `references/ota-implementation.md` for the ESP-NOW maintenance-mode code pat
 Create `partitions.csv` in your sketch directory:
 
 ```csv
-# Name,   Type, SubType, Offset,  Size, Flags
-nvs,      data, nvs,     0x9000,  0x5000,
-otadata,  data, ota,     0xe000,  0x2000,
-app0,     app,  ota_0,   0x10000, 0x640000,
-app1,     app,  ota_1,   0x650000,0x640000,
-spiffs,   data, spiffs,  0xc90000,0x370000,
+# K10 OTA partition table that preserves speech-recognition model regions.
+# Keep model/voice_data/fr offsets aligned with the DFRobot K10 factory table.
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x5000,
+otadata,    data, ota,     0xe000,   0x2000,
+app0,       app,  ota_0,   0x10000,  0x280000,
+app1,       app,  ota_1,   0x290000, 0x280000,
+model,      data, spiffs,  0x510000, 4563K,
+voice_data, data, fat,     0x985000, 2542K,
+fr,         data, ,        0xC01000, 100K,
+coredump,   data, coredump,,         1K,
+spiffs,     data, spiffs,  0xC1B000, 0x3E5000,
 ```
 
 Compile with the custom partition:
@@ -186,6 +194,8 @@ pwsh ./scripts/ota_upload.ps1 -Bin build/your_sketch.ino.bin -Ip 192.168.9.42
 - **Content-Length:** Arduino WebServer's `server.header("Content-Length")` does not work in POST handlers. Use `server.clientContentLength()` instead if you need the raw body size.
 - **Compile cache:** Use Arduino CLI's official `build_cache.*` settings and `--build-path` for repeat builds. Do not document `compiler.cache.enable`, `compiler.cache.path`, or `ccache` as required OTA setup because they are not part of the current Arduino CLI configuration reference.
 - **ESP-NOW:** HTTP OTA needs AP/STA networking. If the program uses ESP-NOW, add an OTA maintenance mode, manage WiFi channel alignment, and pause ESP-NOW traffic while flashing.
+- **AI model regions:** Do not let OTA app partitions overlap `model` at `0x510000`, `voice_data` at `0x985000`, or `fr` at `0xC01000`. A generic large OTA layout can erase AI support data.
+- **Model recovery:** If AI functions reboot or model data is suspected damaged, use Mind+ `Restore Initial Settings` or a one-time USB upload with the Arduino/PlatformIO CN/EN model refresh option. A full erase plus `Model=None` does not restore model files.
 
 ## Files
 

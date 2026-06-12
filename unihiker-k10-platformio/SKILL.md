@@ -24,6 +24,8 @@ build_flags =
 
 K10 uses DFRobot's PlatformIO platform and Arduino framework package. First build downloads a large framework and toolchains; avoid doing this from every student machine during a workshop.
 
+If a project uses K10 AI, voice recognition, TTS, face recognition, or OTA partitions, preserve the factory model-data offsets. Read the repository reference `references/k10-ai-model-flash.md` when available, or follow the model rules below.
+
 ## Quick Workflow
 
 Before writing K10 application code, read the relevant local references:
@@ -147,8 +149,41 @@ PlatformIO's DFRobot platform supports normal USB upload with `pio run -t upload
 
 For native PlatformIO OTA via ESP OTA, set `upload_protocol = espota` and `upload_port = <ip>` only after confirming the firmware and platform support that route.
 
+When combining OTA with K10 built-in AI features, use a partition table that keeps these regions at the factory offsets:
+
+- `model` at `0x510000`, size `4563K`
+- `voice_data` at `0x985000`, size `2542K`
+- `fr` at `0xC01000`, size `100K`
+
+Use 2.5 MB OTA app slots ending exactly before `0x510000`. Do not use generic 6 MB OTA slots for AI projects, because they overlap the model region.
+
+For model recovery or first initialization, add separate USB-only environments:
+
+```ini
+[env:unihiker]
+build_flags =
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+    -DModel=None
+
+[env:unihiker-init-cn]
+build_flags =
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+    -DModel=CN
+
+[env:unihiker-init-en]
+build_flags =
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+    -DModel=EN
+```
+
+Use `unihiker-init-cn` for the Chinese model and `unihiker-init-en` for the English model only when model data may be missing or damaged. Use `unihiker` for normal app uploads and OTA builds.
+
 ## References
 
 - Read `references/platformio-workshop.md` for offline bundle preparation, installation, and troubleshooting.
+- Read `references/k10-ai-model-flash.md` for AI model partitions, OTA compatibility, and recovery workflow.
 - Read `references/k10-arduino-api.md` for K10 API signatures.
 - Read `references/k10-arduino-examples.md` for complete K10 Arduino examples. The C++ APIs are the same as Arduino mode; only the build/upload toolchain changes.

@@ -9,6 +9,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 3. Read that skill's `SKILL.md`.
 4. Read only the referenced API or implementation files needed for the task.
 5. Prefer the provided scripts for upload, flashing, compile, and OTA work.
+6. For AI, voice, OTA, partition-table, or factory-recovery work, read `references/k10-ai-model-flash.md`.
 
 ## Task Routing
 
@@ -20,6 +21,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Flash MicroPython firmware | `unihiker-k10-micropython` | Use the bundled firmware and the documented BOOT/RST download-mode sequence. |
 | Upload or debug MicroPython code | `unihiker-k10-micropython` | Use `main.py` for auto-run behavior; non-entry files require REPL import or `main.py` import. |
 | Add HTTP OTA to an Arduino project | `unihiker-k10-ota` | Add OTA partitions, add an HTTP `/ota` endpoint, and perform one USB upload before wireless updates. |
+| Combine K10 AI functions with OTA or recover missing AI models | `unihiker-k10-ota`, `unihiker-k10-arduino`, or `unihiker-k10-platformio` | Read `references/k10-ai-model-flash.md`; preserve model offsets and use a model-refresh upload only when needed. |
 | Add OTA to an ESP-NOW project | `unihiker-k10-ota` | Use a maintenance OTA mode with AP/STA networking; do not claim HTTP OTA works over pure ESP-NOW packets. |
 | Improve screen animation or sensor display refresh | `unihiker-k10-arduino` or `unihiker-k10-micropython` | Prefer partial redraws and avoid repeated full-screen clearing in loops. |
 
@@ -33,6 +35,8 @@ This file is the cold-start map for agents working in this repository. Read it b
 - MicroPython `v0.9.2` has an AI + WiFi resource conflict; do not combine them unless the user explicitly validates a newer path.
 - HTTP OTA requires OTA partitions and IP networking. ESP-NOW is not an HTTP transport.
 - If an OTA-enabled sketch is replaced by a sketch without the OTA endpoint, wireless update capability is lost until USB flashing restores it.
+- K10 built-in AI model data lives at fixed flash offsets starting at `0x510000`; OTA app partitions must not overlap these regions.
+- A full flash erase followed by `Model=None` can leave AI model partitions blank. Use Mind+ Restore Initial Settings or a one-time Arduino/PlatformIO model-refresh upload.
 
 ## Script Preferences
 

@@ -1,0 +1,12 @@
+# K10 OTA partition table that preserves speech-recognition model regions.
+# Keep model/voice_data/fr offsets aligned with the DFRobot K10 factory table.
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x5000,
+otadata,    data, ota,     0xe000,   0x2000,
+app0,       app,  ota_0,   0x10000,  0x280000,
+app1,       app,  ota_1,   0x290000, 0x280000,
+model,      data, spiffs,  0x510000, 4563K,
+voice_data, data, fat,     0x985000, 2542K,
+fr,         data, ,        0xC01000, 100K,
+coredump,   data, coredump,,         1K,
+spiffs,     data, spiffs,  0xC1B000, 0x3E5000,
