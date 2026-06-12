@@ -26,6 +26,11 @@ K10 uses DFRobot's PlatformIO platform and Arduino framework package. First buil
 
 ## Quick Workflow
 
+Before writing K10 application code, read the relevant local references:
+
+- `references/k10-arduino-api.md` for K10 C++ API signatures.
+- `references/k10-arduino-examples.md` for working examples, including display, RGB, sensors, audio, AI, TTS, and ASR.
+
 1. Check PlatformIO:
 
 ```bash
@@ -118,6 +123,20 @@ If build fails with `ModuleNotFoundError: No module named 'intelhex'` from `tool
 - Use `lib/` for private libraries that belong to the project.
 - Do not mix `arduino-cli` FQBN settings with PlatformIO project configuration.
 - Keep K10 USB serial flags in `build_flags`; they are required for expected USB CDC behavior.
+- Treat the PlatformIO skill as self-contained. Do not rely on sibling skills or repository-relative paths for API details after installation from ClawHub.
+
+## K10 API Notes
+
+- Include K10 board APIs with `#include "unihiker_k10.h"`.
+- Include speech recognition with `#include "asr.h"`.
+- For ASR command registration, prefer mutable `char[]` command buffers:
+
+```cpp
+char cmdLightOn[] = "kai deng";
+asr.addASRCommand(1, cmdLightOn);
+```
+
+Avoid `asr.addASRCommand(id, String("..."))` unless the upstream library has been verified fixed. Some K10 ASR library versions recurse in the `String` overload and can trigger a `loopTask` stack canary reset.
 
 ## OTA Notes
 
@@ -128,4 +147,5 @@ For native PlatformIO OTA via ESP OTA, set `upload_protocol = espota` and `uploa
 ## References
 
 - Read `references/platformio-workshop.md` for offline bundle preparation, installation, and troubleshooting.
-- Reuse K10 Arduino API patterns from `../unihiker-k10-arduino/references/arduino-api.md` when this repo is available. The C++ APIs are the same K10 Arduino APIs; only the build/upload toolchain changes.
+- Read `references/k10-arduino-api.md` for K10 API signatures.
+- Read `references/k10-arduino-examples.md` for complete K10 Arduino examples. The C++ APIs are the same as Arduino mode; only the build/upload toolchain changes.
