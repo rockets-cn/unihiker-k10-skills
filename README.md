@@ -7,8 +7,9 @@ Local Codex skills for working with the DFRobot Unihiker K10 board. Install thes
 | Skill | Use it for | Current notes |
 | --- | --- | --- |
 | `unihiker-k10-arduino` | Arduino/C++ sketches, K10 BSP setup, serial upload, Arduino API lookup, screen/sensor/RGB/audio/AI examples. | Uses FQBN `UNIHIKER:esp32:k10`; includes Windows `arduino-cli.exe`; documents Arduino CLI `build_cache.*` rather than older cache keys. |
+| `unihiker-k10-platformio` | PlatformIO CLI projects, K10 Arduino/C++ builds, serial upload, monitoring, and workshop offline support bundles. | Uses DFRobot's `platform-unihiker`; includes self-contained K10 API references and AI model recovery notes. |
 | `unihiker-k10-micropython` | Flashing MicroPython, uploading `main.py`, MicroPython API lookup, REPL-oriented troubleshooting. | Bundles K10 MicroPython firmware `v0.9.2`; only `main.py` auto-runs after reset. |
-| `unihiker-k10-ota` | Adding HTTP OTA update support to Arduino projects. | Requires a custom partition table with `ota_0` and `ota_1`; includes Python and PowerShell upload helpers. |
+| `unihiker-k10-ota` | Adding HTTP OTA update support to Arduino or PlatformIO projects. | Requires a custom partition table with `ota_0` and `ota_1`; AI projects must preserve the K10 model partitions. |
 
 ## Agent Usage
 
@@ -17,8 +18,10 @@ Agents should read `AGENT_INDEX.md` first, then load only the matching skill for
 | User intent | Load |
 | --- | --- |
 | Arduino sketch, C++ API, serial upload, K10 BSP setup | `unihiker-k10-arduino/SKILL.md` |
+| PlatformIO CLI project, PlatformIO upload, offline workshop bundle | `unihiker-k10-platformio/SKILL.md` |
 | MicroPython firmware, `main.py`, `mpremote`, Python API | `unihiker-k10-micropython/SKILL.md` |
 | Wireless Arduino firmware update, HTTP OTA, ESP-NOW maintenance OTA mode | `unihiker-k10-ota/SKILL.md` |
+| AI model recovery, voice/TTS/face AI with OTA partitions | `references/k10-ai-model-flash.md` plus the matching toolchain skill |
 
 Do not guess K10 APIs from general ESP32 or MicroPython knowledge. Read the selected skill and its relevant `references/` material before writing code or commands.
 
@@ -29,6 +32,7 @@ Copy or symlink every skill folder into your Codex skills directory:
 ```bash
 mkdir -p ~/.agents/skills
 cp -R unihiker-k10-arduino ~/.agents/skills/
+cp -R unihiker-k10-platformio ~/.agents/skills/
 cp -R unihiker-k10-micropython ~/.agents/skills/
 cp -R unihiker-k10-ota ~/.agents/skills/
 ```
@@ -38,6 +42,7 @@ On Windows PowerShell:
 ```powershell
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills"
 Copy-Item -Recurse .\unihiker-k10-arduino "$env:USERPROFILE\.agents\skills\"
+Copy-Item -Recurse .\unihiker-k10-platformio "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-micropython "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-ota "$env:USERPROFILE\.agents\skills\"
 ```
@@ -101,6 +106,36 @@ bash unihiker-k10-arduino/scripts/compile-ota.sh hello
 .\unihiker-k10-arduino\scripts\compile-ota.ps1 hello
 ```
 
+## PlatformIO Quick Start
+
+Use the PlatformIO skill when you want K10 Arduino/C++ development through `pio` instead of `arduino-cli`.
+
+1. Install PlatformIO Core and initialize a K10 project:
+
+   ```bash
+   bash unihiker-k10-platformio/scripts/init-k10-platformio-project.sh my-k10-project
+   ```
+
+2. Build and upload:
+
+   ```bash
+   pio run -d my-k10-project
+   pio run -d my-k10-project -t upload --upload-port /dev/cu.usbmodem2201
+   ```
+
+3. Monitor serial output:
+
+   ```bash
+   pio device monitor -d my-k10-project --port /dev/cu.usbmodem2201 --baud 115200
+   ```
+
+For workshops, prepare one offline bundle per OS/CPU architecture so students do not all download the K10 framework and ESP32 toolchains at the same time:
+
+```bash
+bash unihiker-k10-platformio/scripts/prepare-offline-bundle.sh /tmp/k10-platformio-bundle.tgz
+bash unihiker-k10-platformio/scripts/install-offline-bundle.sh /tmp/k10-platformio-bundle.tgz
+```
+
 ## MicroPython Quick Start
 
 1. Install the flashing and upload tools:
@@ -151,6 +186,25 @@ Use the OTA skill when an Arduino project needs wireless updates after the first
 
 HTTP OTA needs AP or STA networking. ESP-NOW-only packets are not an IP transport, so ESP-NOW projects should enter a maintenance OTA mode, start AP/STA networking, pause time-critical traffic, and service the HTTP endpoint there.
 
+## K10 AI Models and Recovery
+
+K10 built-in AI support files live in fixed flash regions. Projects that use voice recognition, TTS, face recognition, or other built-in AI features must not let OTA app partitions overlap these regions:
+
+| Region | Offset | Factory size |
+| --- | --- | --- |
+| `model` | `0x510000` | `4563K` |
+| `voice_data` | `0x985000` | `2542K` |
+| `fr` | `0xC01000` | `100K` |
+
+Safe pattern for AI + OTA projects:
+
+- Use OTA app slots that end before `0x510000`.
+- Use normal app builds with `Model=None` / `-DModel=None` when the board already has valid model data.
+- Use a one-time USB model refresh only when model data may be blank or damaged.
+- Use Mind+ `Restore Initial Settings` as the official recovery path when the board repeatedly reboots or AI model files appear damaged.
+
+Toolchain-specific recovery notes are in `references/k10-ai-model-flash.md` and `unihiker-k10-platformio/references/k10-ai-model-flash.md`.
+
 ## Board and Toolchain Rules
 
 - Arduino and MicroPython firmware are mutually exclusive. Flash the firmware that matches the workflow you are using.
@@ -161,13 +215,16 @@ HTTP OTA needs AP or STA networking. ESP-NOW-only packets are not an IP transpor
 - Avoid documenting `compiler.cache.*` or `ccache` as standard setup. Current Arduino CLI uses `build_cache.*`.
 - MicroPython firmware `v0.9.2` has a known AI + WiFi resource conflict. Use one at a time unless you have validated a newer firmware path.
 - OTA-enabled Arduino sketches must keep the OTA endpoint in future builds. Uploading a sketch without it removes wireless update capability until the next USB flash.
+- Generic large OTA partition tables can overwrite K10 AI model data. Preserve the fixed `model`, `voice_data`, and `fr` offsets for AI-enabled projects.
 
 ## Repository Layout
 
 ```text
 unihiker-k10-arduino/       Arduino skill, upload scripts, API references, examples
+unihiker-k10-platformio/    PlatformIO skill, offline bundle scripts, API references
 unihiker-k10-micropython/   MicroPython skill, flash/upload scripts, firmware, API reference
 unihiker-k10-ota/           HTTP OTA skill, implementation guide, upload scripts
+references/                 Shared repository-level K10 notes, including AI model recovery
 sketches/                   Example Arduino sketches
 ```
 
@@ -179,6 +236,7 @@ Validate skill frontmatter after changing `SKILL.md`:
 
 ```bash
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-arduino
+python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-platformio
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-micropython
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-ota
 ```
@@ -187,5 +245,6 @@ Run shell syntax checks after editing Bash scripts:
 
 ```bash
 bash -n unihiker-k10-arduino/scripts/*.sh
+bash -n unihiker-k10-platformio/scripts/*.sh
 bash -n unihiker-k10-micropython/scripts/*.sh
 ```
