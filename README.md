@@ -211,7 +211,7 @@ Toolchain-specific recovery notes are in `references/k10-ai-model-flash.md` and 
 - Arduino sketches use `UNIHIKER:esp32:k10`; `esp32:unihiker` is not the correct FQBN.
 - Arduino `.ino` files must live in a directory with the same base name.
 - K10 Arduino canvas drawing methods are called through `k10.canvas->`, not directly on `k10`.
-- Prefer local or partial screen redraws for animations and sensor refreshes. Repeated full-screen clears cause flicker and unnecessary work.
+- Prefer local or partial screen redraws for animations, dashboards, sensor values, status text, and voice/OTA state. Repeated full-screen clears or full-background redraws cause visible flicker and are uncomfortable; use full-screen refresh only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
 - Avoid documenting `compiler.cache.*` or `ccache` as standard setup. Current Arduino CLI uses `build_cache.*`.
 - MicroPython firmware `v0.9.2` has a known AI + WiFi resource conflict. Use one at a time unless you have validated a newer firmware path.
 - OTA-enabled Arduino sketches must keep the OTA endpoint in future builds. Uploading a sketch without it removes wireless update capability until the next USB flash.

@@ -27,7 +27,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Add HTTP OTA to an Arduino or PlatformIO project | `unihiker-k10-ota` | Add OTA partitions, add an HTTP `/ota` endpoint, and perform one USB upload before wireless updates. |
 | Combine K10 AI functions with OTA or recover missing AI models | `unihiker-k10-ota`, `unihiker-k10-arduino`, or `unihiker-k10-platformio` | Read `references/k10-ai-model-flash.md`; preserve model offsets and use a model-refresh upload only when needed. |
 | Add OTA to an ESP-NOW project | `unihiker-k10-ota` | Use a maintenance OTA mode with AP/STA networking; do not claim HTTP OTA works over pure ESP-NOW packets. |
-| Improve screen animation or sensor display refresh | `unihiker-k10-arduino` or `unihiker-k10-micropython` | Prefer partial redraws and avoid repeated full-screen clearing in loops. |
+| Improve screen animation, sensor display refresh, dashboards, or status UIs | `unihiker-k10-arduino`, `unihiker-k10-platformio`, or `unihiker-k10-micropython` | Prefer partial redraws; avoid full-screen clearing unless the full-screen refresh rate is proven above 30 fps. |
 
 ## Non-Negotiable Constraints
 
@@ -37,6 +37,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 - Arduino sketches must use same-named sketch directories.
 - PlatformIO projects use `platformio.ini` and `src/main.cpp`; do not mix Arduino CLI FQBN settings into PlatformIO config.
 - Arduino canvas calls use `k10.canvas->`.
+- Screen updates must default to partial redraws. Full-screen clearing or full-background redraw causes visible flicker and is only acceptable for initialization, page changes, exit cleanup, or when the measured full-screen refresh rate is above 30 fps.
 - Current Arduino CLI cache settings use `build_cache.*`; do not introduce `compiler.cache.*` or `ccache` as standard setup.
 - MicroPython `v0.9.2` has an AI + WiFi resource conflict; do not combine them unless the user explicitly validates a newer path.
 - HTTP OTA requires OTA partitions and IP networking. ESP-NOW is not an HTTP transport.

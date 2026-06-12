@@ -1,5 +1,7 @@
 # K10 HTTP OTA Implementation Guide
 
+Screen refresh rule: if the firmware displays OTA progress, WiFi state, IP addresses, voice state, or other status on the K10 screen, update only changed regions. Do not clear and redraw the whole screen in `loop()` unless full-screen refresh is measured above 30 fps; otherwise the display will visibly flicker.
+
 ## Table of Contents
 
 1. [Why HTTP OTA Instead of ArduinoOTA](#why-http-ota)

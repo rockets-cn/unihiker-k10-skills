@@ -9,6 +9,8 @@ description: Use when programming Unihiker K10 board with MicroPython, uploading
 
 CLI toolkit for Unihiker K10 board MicroPython programming. **Core principle:** Follow reference docs exactly—no improvisation.
 
+Screen refresh policy: always design K10 display code around partial redraws. Full-screen clearing or full-background redraw causes obvious flicker and is uncomfortable; use it only for initialization, page switches, exit cleanup, or when you have measured full-screen refresh above 30 fps.
+
 ## When to Use
 
 - Uploading MicroPython code to K10
@@ -39,7 +41,7 @@ screen.show_draw()
 **Important:**
 - **Auto-execution**: Only `main.py` runs automatically on boot. Other filenames (e.g., `test.py`) must be imported or run via REPL
 - **Best practice**: Name your entry file as `main.py` for auto-start
-- **Screen refresh**: 能尽量用局部刷新的就不用全局刷新；频繁全屏清除会导致显示闪烁和卡顿。
+- **Screen refresh**: 默认局部刷新。除初始化、页面切换、退出清理，或实测全屏刷新率超过 30 fps 外，不要在循环里调用 `screen.clear()` 或整屏 `screen.show_bg()`。
 - **Reference**: [`references/micropython-api.md`](references/micropython-api.md)
 
 ## Common Issues
@@ -51,7 +53,7 @@ screen.show_draw()
 | **mpremote: could not enter raw repl** | K10 is running Arduino, flash MicroPython firmware first |
 | Port not found | `k10-micropython ports` or hold BOOT while connecting |
 | **AI + WiFi conflict** | Use only one in V0.9.2 |
-| **屏幕闪烁** | 使用局部刷新，避免循环中频繁调用 `screen.clear()` 或整屏 `screen.show_bg()` |
+| **屏幕闪烁** | 使用局部刷新，避免循环中频繁调用 `screen.clear()` 或整屏 `screen.show_bg()`；只有实测全屏刷新超过 30 fps 才可高频全屏刷新 |
 | **Windows PowerShell执行策略限制** | 运行 `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
 
 ## 开发经验教训
@@ -188,7 +190,7 @@ mpremote connect /dev/cu.usbmodem2201 repl
 
 ### Screen Rendering Optimization
 
-K10 的屏幕刷新率有限。循环动画、传感器数值刷新、倒计时、状态提示等场景中，如果每帧都调用 `screen.clear()` 或整屏 `screen.show_bg()`，屏幕容易出现闪烁、卡顿，并增加无效绘制开销。默认采用**局部刷新**：
+K10 的屏幕刷新率有限。循环动画、传感器数值刷新、倒计时、状态提示等场景中，如果每帧都调用 `screen.clear()` 或整屏 `screen.show_bg()`，屏幕容易出现明显闪烁、卡顿，观感很不舒服。默认必须采用**局部刷新**。除初始化、页面切换、退出清理，或实测全屏刷新率超过 30 fps 外，不要使用全局刷新。
 
 **核心原则：**
 1. 静态背景只绘制一次
@@ -223,7 +225,7 @@ while True:
         last_text = text
 ```
 
-整屏刷新只用于页面切换、初始化、退出清理等低频场景；高频更新必须优先局部刷新，防止显示闪烁。
+整屏刷新只用于页面切换、初始化、退出清理等低频场景；高频更新必须优先局部刷新。若确实想高频整屏刷新，先实测全屏刷新率，低于或等于 30 fps 时必须改成局部刷新。
 
 ## Example: Face Recognition with LED Feedback
 

@@ -15,6 +15,8 @@ Enable wireless firmware updates for K10 Arduino projects via HTTP POST.
 
 **AI model rule:** K10 built-in AI support files live in fixed flash regions beginning at `0x510000`. OTA partitions must end before that address if the project uses voice recognition, TTS, face recognition, or other built-in AI features.
 
+**Screen refresh rule:** OTA status pages, progress indicators, connection state, and voice status should use partial redraws. Full-screen clearing or full-background redraw causes visible flicker on K10; use it only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
+
 ## When to Use
 
 - Your K10 is installed in a location difficult to reach with USB
@@ -196,6 +198,7 @@ pwsh ./scripts/ota_upload.ps1 -Bin build/your_sketch.ino.bin -Ip 192.168.9.42
 - **ESP-NOW:** HTTP OTA needs AP/STA networking. If the program uses ESP-NOW, add an OTA maintenance mode, manage WiFi channel alignment, and pause ESP-NOW traffic while flashing.
 - **AI model regions:** Do not let OTA app partitions overlap `model` at `0x510000`, `voice_data` at `0x985000`, or `fr` at `0xC01000`. A generic large OTA layout can erase AI support data.
 - **Model recovery:** If AI functions reboot or model data is suspected damaged, use Mind+ `Restore Initial Settings` or a one-time USB upload with the Arduino/PlatformIO CN/EN model refresh option. A full erase plus `Model=None` does not restore model files.
+- **Display refresh:** Do not clear and redraw the whole K10 screen in `loop()` just to update OTA/WiFi progress. Draw static labels once, then overwrite only changed values or progress areas before one display update call.
 
 ## Files
 

@@ -26,6 +26,8 @@ K10 uses DFRobot's PlatformIO platform and Arduino framework package. First buil
 
 If a project uses K10 AI, voice recognition, TTS, face recognition, or OTA partitions, preserve the factory model-data offsets. Read the repository reference `references/k10-ai-model-flash.md` when available, or follow the model rules below.
 
+Screen refresh policy: generated K10 display code must prefer partial redraws. Full-screen clearing or full-background redraw causes visible flicker and is uncomfortable; use it only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
+
 ## Quick Workflow
 
 Before writing K10 application code, read the relevant local references:
@@ -134,6 +136,7 @@ If build fails with `ModuleNotFoundError: No module named 'intelhex'` from `tool
 
 - Include K10 board APIs with `#include "unihiker_k10.h"`.
 - Include speech recognition with `#include "asr.h"`.
+- For animations, dashboards, sensor readouts, voice status, OTA status, and other repeated updates, erase and redraw only the changed region. Do not use `canvasClear()` or redraw the full background in a loop unless the measured full-screen refresh rate is above 30 fps.
 - For ASR command registration, prefer mutable `char[]` command buffers:
 
 ```cpp

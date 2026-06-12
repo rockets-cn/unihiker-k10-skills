@@ -14,6 +14,8 @@ CLI toolkit for Unihiker K10 board Arduino programming. **Core principle:** Foll
 
 If a sketch uses K10 AI, voice recognition, TTS, face recognition, or OTA partitions, preserve the factory model-data offsets. Read the repository reference `references/k10-ai-model-flash.md` when available.
 
+Screen refresh policy: always design K10 display code around partial redraws. Full-screen clearing or full-background redraw causes obvious flicker and is uncomfortable; use it only for initialization, page switches, exit cleanup, or when you have measured full-screen refresh above 30 fps.
+
 ## When to Use
 
 - Uploading Arduino/C++ code to K10
@@ -327,7 +329,7 @@ void loop() {
 **Important:**
 - **File structure**: `.ino` file must be in a directory with the same name (e.g., `star/star.ino`)
 - **Canvas API**: All canvas methods use `k10.canvas->`, not `k10.`
-- **Screen refresh**: 能尽量用局部刷新的就不用全局刷新。
+- **Screen refresh**: 默认局部刷新。除初始化、页面切换、退出清理，或实测全屏刷新率超过 30 fps 外，不要使用 `canvasClear()` / 全屏重绘作为循环刷新方案。
 - **FQBN**: `UNIHIKER:esp32:k10`
 - **Reference**: [`references/arduino-api.md`](references/arduino-api.md)
 
@@ -342,7 +344,7 @@ void loop() {
 | **Class has no member named 'canvasLine'** | Canvas方法使用 `k10.canvas->`，不是 `k10.` |
 | **编译错误: No such file or directory** | 检查库依赖，部分库需要手动安装到Documents/Arduino/libraries |
 | **上传失败/无法连接** | 按住BOOT按钮，按RST重置，释放BOOT进入下载模式 |
-| **屏幕闪烁** | 使用局部刷新，避免每帧调用 `canvasClear()`，详见性能优化章节 |
+| **屏幕闪烁** | 使用局部刷新，避免每帧调用 `canvasClear()` 或全屏背景重绘；只有实测全屏刷新超过 30 fps 才可高频全屏刷新 |
 | **Windows PowerShell执行策略限制** | 运行 `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
 
 ## 上传脚本使用说明
@@ -392,7 +394,7 @@ arduino-cli config set build_cache.compilations_before_purge 0
 
 ### Screen Rendering Optimization
 
-K10 的屏幕刷新率有限，频繁的全屏清除 (`canvasClear()`) 会导致闪烁和卡顿。推荐使用**局部刷新**技术：
+K10 的屏幕刷新率有限，频繁的全屏清除 (`canvasClear()`) 或全屏背景重绘会导致明显闪烁和卡顿，观感很不舒服。默认必须使用**局部刷新**技术。除初始化、页面切换、退出清理，或实测全屏刷新率超过 30 fps 外，不要在循环动画、传感器数值、状态栏、语音识别状态、OTA 状态等场景使用全局刷新。
 
 **核心思想：**
 1. 只擦除变化的部分，而不是整个屏幕
@@ -434,9 +436,10 @@ void update() {
 
 **优化建议：**
 - 静态背景（如云朵、地面）只绘制一次
-- 降低帧率到 30-40fps 以平衡流畅度和性能
-- 避免每帧都调用 `canvasClear()`
-- 使用 `delay(25-33)` 控制帧率 (对应 30-40fps)
+- 优先只擦除和重绘变化区域，再调用一次 `updateCanvas()`
+- 避免每帧都调用 `canvasClear()` 或重画全屏背景
+- 如果确实需要高频全屏刷新，先实测全屏刷新率；低于或等于 30 fps 时必须改成局部刷新
+- 使用 `millis()` 或短 `delay(33)` 限制刷新节奏，避免无意义重复刷新
 
 ## 开发经验教训
 

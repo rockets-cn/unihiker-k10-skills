@@ -1,6 +1,9 @@
 ## UNIHIKER_K10
 The UNIHIKER K10 library is a library for controlling the K10 on-screen display, on-board sensors, SD card, and playing sound.
 Note: The source code for this library will be made available on the DFRobot GitHub when the UNIHIKER K10 SDK is upgraded to the full version.
+
+Screen refresh rule: prefer partial redraws for all repeated display updates. Avoid `canvasClear()` or full-background redraw in loops because it causes visible flicker; use full-screen refresh only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
+
 ````c++ title="Init"
 /**
  * @fn begin

@@ -1,3 +1,5 @@
+> Screen refresh rule: the examples below are API demonstrations, not permission to clear or redraw the whole screen in a fast loop. For animations, sensor values, dashboards, voice status, OTA status, and other repeated updates, redraw only changed regions. Use full-screen refresh only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
+
 ## **Display-Set Back Ground Color**
 Setting the background color of the K10 screen<br/>
 ````c++ title="Screen Display"
