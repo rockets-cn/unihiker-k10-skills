@@ -232,6 +232,8 @@ sketches/                   Example Arduino sketches
 
 ## Maintenance Checks
 
+When adding a new skill or materially changing an existing one, update both `README.md` and `AGENT_INDEX.md` in the same change so human-facing and agent-facing routing stay aligned.
+
 Validate skill frontmatter after changing `SKILL.md`:
 
 ```bash
