@@ -13,6 +13,7 @@ The first K10 PlatformIO build downloads DFRobot's PlatformIO platform, the K10 
 | `packages/toolchain-xtensa-esp32` | Base ESP32 compiler toolchain declared by platform; include when present for conservative bundles | 387 MB |
 | `packages/tool-esptoolpy` | Upload tool | 2.6 MB |
 | `packages/tool-scons` | Build tool | 4.9 MB |
+| `packages/tool-mkfatfs`, `tool-mklittlefs`, `tool-mkspiffs` | Filesystem image tools for related upload targets | a few MB |
 
 A minimal compressed bundle from only the K10 framework plus Xtensa S3 pieces was about 459 MB on macOS. A conservative workshop bundle that includes every tool used or declared by the K10 platform will be larger. Exact sizes differ by OS and CPU architecture.
 
@@ -39,6 +40,7 @@ Copy the bundle by USB drive, local file share, or classroom LAN. Then run:
 
 ```bash
 bash scripts/install-offline-bundle.sh /path/to/k10-platformio-bundle.tgz
+bash scripts/doctor-offline.sh
 ```
 
 If PlatformIO uses a custom core directory, set `PLATFORMIO_CORE_DIR` during installation and during later builds:
@@ -54,6 +56,7 @@ Run:
 
 ```bash
 pio pkg list -g | grep -E 'unihiker|framework-arduinounihiker|xtensa-esp32s3'
+bash scripts/doctor-offline.sh
 pio run -d /path/to/k10-project
 ```
 

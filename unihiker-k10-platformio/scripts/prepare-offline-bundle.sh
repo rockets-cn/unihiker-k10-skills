@@ -22,6 +22,9 @@ REQUIRED=(
   "packages/toolchain-xtensa-esp32s3"
   "packages/tool-esptoolpy"
   "packages/tool-scons"
+  "packages/tool-mkfatfs"
+  "packages/tool-mklittlefs"
+  "packages/tool-mkspiffs"
 )
 
 missing=()

@@ -19,4 +19,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "[OK] Installed K10 PlatformIO support files into: $CoreDir"
-Write-Host "[INFO] Verify with: pio pkg list -g | Select-String 'unihiker|framework-arduinounihiker|xtensa-esp32s3'"
+Write-Host "[INFO] Verify with: pio pkg list -g | Select-String 'unihiker|framework-arduinounihiker|xtensa-esp32s3|riscv32-esp'"

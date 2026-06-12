@@ -235,6 +235,48 @@ arduino-cli board list
 | `k10-arduino ports` | List serial ports |
 | `k10-arduino doctor` | Environment diagnostic |
 | `compile-ota.ps1 <dir> [-Ip <ip>]` | Optimized compile + optional OTA upload |
+| `prepare-offline-bundle.sh <output.tgz>` | Create USB-distributable Arduino BSP/core bundle |
+| `install-offline-bundle.sh <bundle.tgz>` | Install a prepared Arduino offline bundle |
+| `doctor-offline.sh` | Check whether offline BSP/core files are present |
+
+## Workshop Offline Bundle
+
+Use an offline bundle when many learners will install or build K10 Arduino projects in the same room. Prepare one bundle per OS/CPU architecture.
+
+The Arduino data directory is platform-specific:
+
+| OS | Arduino data directory |
+| --- | --- |
+| macOS | `~/Library/Arduino15` |
+| Linux | `~/.arduino15` |
+| Windows | `%LOCALAPPDATA%\Arduino15` |
+
+The important installed directories are:
+
+| Directory | Purpose |
+| --- | --- |
+| `packages/UNIHIKER` | K10 BSP, K10 Arduino libraries, and required tools |
+| `packages/esp32` | ESP32 Arduino core/toolchain dependency |
+
+Teacher-machine preparation:
+
+```bash
+# Install K10 BSP and ESP32 core first, then:
+bash scripts/prepare-offline-bundle.sh /tmp/k10-arduino-bundle.tgz
+```
+
+Student-machine installation:
+
+```bash
+bash scripts/install-offline-bundle.sh /path/to/k10-arduino-bundle.tgz
+bash scripts/doctor-offline.sh
+```
+
+By default, the bundle excludes `staging/` download caches because they can be many GB. Use `--include-staging` only when you intentionally want to distribute raw downloaded archives too:
+
+```bash
+bash scripts/prepare-offline-bundle.sh /tmp/k10-arduino-full-cache.tgz --include-staging
+```
 
 ## Coding
 

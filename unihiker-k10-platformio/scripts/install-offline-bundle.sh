@@ -18,4 +18,5 @@ mkdir -p "$CORE_DIR"
 tar -xzf "$BUNDLE" -C "$CORE_DIR"
 
 echo "[OK] Installed K10 PlatformIO support files into: $CORE_DIR"
-echo "[INFO] Verify with: pio pkg list -g | grep -E 'unihiker|framework-arduinounihiker|xtensa-esp32s3'"
+echo "[INFO] Verify with: doctor-offline.sh"
+echo "[INFO] Or run: pio pkg list -g | grep -E 'unihiker|framework-arduinounihiker|xtensa-esp32s3|riscv32-esp'"

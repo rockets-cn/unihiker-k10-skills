@@ -73,6 +73,7 @@ pio device monitor -d my-k10-project --port /dev/cu.usbmodemXXXX
 - `scripts/k10-pio.sh`: convenience wrapper for `doctor`, `ports`, `build`, `upload`, and `monitor`.
 - `scripts/prepare-offline-bundle.sh`: build once, collect K10 PlatformIO support files, and create a distributable `.tgz`.
 - `scripts/install-offline-bundle.sh`: install a prepared bundle into a user's PlatformIO core directory.
+- `scripts/doctor-offline.sh`: verify that the required K10 PlatformIO packages are present before class.
 - `scripts/k10-pio.ps1` and `scripts/install-offline-bundle.ps1`: Windows PowerShell helpers for common operations and bundle installation.
 
 Prefer scripts for repeated workshop setup. Read `references/platformio-workshop.md` before changing offline bundle behavior.
@@ -92,6 +93,7 @@ Expected support-file sizes after first successful build vary by OS/CPU, but the
 | `packages/toolchain-xtensa-esp32` | Base ESP32 toolchain declared by platform; include when present for conservative bundles | ~350-400 MB |
 | `packages/tool-esptoolpy` | Upload tool | a few MB |
 | `packages/tool-scons` | Build tool | a few MB |
+| `packages/tool-mkfatfs`, `tool-mklittlefs`, `tool-mkspiffs` | Filesystem image tools used by some upload targets | a few MB |
 
 A minimal compressed bundle is typically hundreds of MB. Prepare one bundle per OS/architecture: macOS arm64, macOS Intel, Windows, and Linux are not interchangeable.
 
@@ -108,6 +110,7 @@ Student installation flow:
 
 ```bash
 bash scripts/install-offline-bundle.sh /path/to/k10-platformio-bundle.tgz
+bash scripts/doctor-offline.sh
 pio run -d my-k10-project
 ```
 
