@@ -34,28 +34,31 @@ Screen refresh policy: generated K10 display code must prefer partial redraws. F
 
 For Windows machines with no PlatformIO or Python environment installed, use the self-contained K10 PlatformIO offline installer first. It installs an isolated PlatformIO environment and does not require system `pio`.
 
-Known install location:
+Known install locations to check, in order:
 
 ```text
+C:\K10P
+%USERPROFILE%\K10P
+%LOCALAPPDATA%\K10P
 %LOCALAPPDATA%\K10PlatformIO
 ```
 
 Check this location before assuming PlatformIO is missing:
 
 ```powershell
-cd "$env:LOCALAPPDATA\K10PlatformIO"
+cd C:\K10P
 .\setup-platformio.bat
 .\pio.bat --version
 .\pio.bat run -d .\examples\Blink
 ```
 
-Important: use the bundled `pio.bat` or `platformio.bat` wrappers. Do not call `.platformio\penv\Scripts\pio.exe` directly; Windows launcher executables can contain absolute paths from the machine that built the bundle.
+Important: use the bundled `pio.bat` or `platformio.bat` wrappers. Do not call `.platformio\penv\Scripts\pio.exe` or `.platformio\penv\Scripts\python.exe` directly; Windows launcher/venv executables can contain absolute paths from the machine that built the bundle or break under non-ASCII usernames. The wrapper uses `.platformio\python3\python.exe -m platformio` with `PYTHONPATH` set to the bundled site-packages.
 
 For user projects:
 
 ```powershell
-%LOCALAPPDATA%\K10PlatformIO\compile-project.bat "C:\path\to\PlatformIOProject"
-%LOCALAPPDATA%\K10PlatformIO\upload-project.bat "C:\path\to\PlatformIOProject" COM3
+C:\K10P\compile-project.bat "C:\path\to\PlatformIOProject"
+C:\K10P\upload-project.bat "C:\path\to\PlatformIOProject" COM3
 ```
 
 Before writing K10 application code, read the relevant local references:
