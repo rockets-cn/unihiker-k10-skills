@@ -30,6 +30,34 @@ Screen refresh policy: generated K10 display code must prefer partial redraws. F
 
 ## Quick Workflow
 
+### Windows Self-Contained Offline Installer
+
+For Windows machines with no PlatformIO or Python environment installed, use the self-contained K10 PlatformIO offline installer first. It installs an isolated PlatformIO environment and does not require system `pio`.
+
+Known install location:
+
+```text
+%LOCALAPPDATA%\K10PlatformIO
+```
+
+Check this location before assuming PlatformIO is missing:
+
+```powershell
+cd "$env:LOCALAPPDATA\K10PlatformIO"
+.\setup-platformio.bat
+.\pio.bat --version
+.\pio.bat run -d .\examples\Blink
+```
+
+Important: use the bundled `pio.bat` or `platformio.bat` wrappers. Do not call `.platformio\penv\Scripts\pio.exe` directly; Windows launcher executables can contain absolute paths from the machine that built the bundle.
+
+For user projects:
+
+```powershell
+%LOCALAPPDATA%\K10PlatformIO\compile-project.bat "C:\path\to\PlatformIOProject"
+%LOCALAPPDATA%\K10PlatformIO\upload-project.bat "C:\path\to\PlatformIOProject" COM3
+```
+
 Before writing K10 application code, read the relevant local references:
 
 - `references/k10-arduino-api.md` for K10 C++ API signatures.
