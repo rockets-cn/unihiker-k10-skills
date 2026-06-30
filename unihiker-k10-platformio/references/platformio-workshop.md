@@ -32,7 +32,48 @@ After the build succeeds, create the bundle:
 bash scripts/prepare-offline-bundle.sh /tmp/k10-platformio-bundle.tgz
 ```
 
-Make one bundle per OS and CPU architecture. Do not share a macOS arm64 bundle with Windows or Linux machines.
+Make one bundle per supported OS and CPU architecture. Do not share a macOS arm64 bundle with Windows or Linux machines.
+
+## macOS Self-Contained USB Installer
+
+Use this for Apple Silicon Macs when students should not install PlatformIO or download Python packages during class. The package is a relocatable folder archive, not a system-wide `.pkg`; it does not need administrator permissions and can be copied from a USB drive. Intel Macs are not supported.
+
+On a prepared teacher Mac:
+
+```bash
+bash scripts/init-k10-platformio-project.sh /tmp/k10-pio-probe
+pio run -d /tmp/k10-pio-probe
+bash scripts/prepare-macos-offline-installer.sh /tmp/K10P-macos-arm64.tgz
+```
+
+Copy the resulting `.tgz` to the USB drive.
+
+On each student Mac:
+
+```bash
+tar -xzf /Volumes/USB/K10P-macos-arm64.tgz -C "$HOME"
+mv "$HOME/K10P-macos-arm64" "$HOME/K10P"
+cd "$HOME/K10P"
+./setup-platformio.command
+./pio --version
+./pio run -d ./examples/Blink
+```
+
+Then use the bundled wrappers:
+
+```bash
+~/K10P/compile-project "/path/to/PlatformIOProject"
+~/K10P/upload-project "/path/to/PlatformIOProject" /dev/cu.usbmodemXXXX
+~/K10P/monitor-project "/path/to/PlatformIOProject" /dev/cu.usbmodemXXXX
+```
+
+The setup script creates a private `penv` inside `~/K10P` and installs PlatformIO from the included `wheelhouse` using `--no-index`. It also uses the bundled `~/K10P/.platformio` support directory for K10 toolchains and framework files. Student setup should not need internet after the archive has been prepared.
+
+macOS still needs a local `python3` executable to create the private virtual environment. If it is missing, install Apple's Command Line Tools or Python 3 before class. If Gatekeeper quarantine blocks the copied scripts, run:
+
+```bash
+xattr -dr com.apple.quarantine "$HOME/K10P"
+```
 
 ## Install on Student Machines
 

@@ -61,6 +61,43 @@ C:\K10P\compile-project.bat "C:\path\to\PlatformIOProject"
 C:\K10P\upload-project.bat "C:\path\to\PlatformIOProject" COM3
 ```
 
+### macOS Self-Contained Offline Installer
+
+For Apple Silicon macOS workshops, prepare an offline installer folder on the teacher Mac and copy the resulting `.tgz` by USB drive. This avoids each student downloading the large K10 PlatformIO platform, framework, toolchains, and PlatformIO Python packages. Intel Macs are not supported.
+
+Prepare the Apple Silicon archive:
+
+```bash
+# On a prepared teacher Mac after one successful K10 PlatformIO build
+bash scripts/prepare-macos-offline-installer.sh /tmp/K10P-macos-arm64.tgz
+```
+
+On each student Mac:
+
+```bash
+tar -xzf /Volumes/USB/K10P-macos-arm64.tgz -C "$HOME"
+mv "$HOME/K10P-macos-arm64" "$HOME/K10P"
+cd "$HOME/K10P"
+./setup-platformio.command
+./pio --version
+./pio run -d ./examples/Blink
+```
+
+For user projects:
+
+```bash
+~/K10P/compile-project "/path/to/PlatformIOProject"
+~/K10P/upload-project "/path/to/PlatformIOProject" /dev/cu.usbmodemXXXX
+```
+
+Important: use the bundled `~/K10P/pio` or `~/K10P/platformio` wrappers. They set `PLATFORMIO_CORE_DIR` to the private bundled `.platformio` directory so builds do not depend on or modify the user's global PlatformIO installation.
+
+The macOS bundle still needs a local `python3` to create its private virtual environment. It does not need internet during student setup. If macOS blocks files copied from a downloaded archive, remove quarantine on the copied folder:
+
+```bash
+xattr -dr com.apple.quarantine "$HOME/K10P"
+```
+
 Before writing K10 application code, read the relevant local references:
 
 - `references/k10-arduino-api.md` for K10 C++ API signatures.
@@ -107,6 +144,7 @@ pio device monitor -d my-k10-project --port /dev/cu.usbmodemXXXX
 - `scripts/init-k10-platformio-project.sh`: create a minimal K10 PlatformIO project with sample screen code.
 - `scripts/k10-pio.sh`: convenience wrapper for `doctor`, `ports`, `build`, `upload`, and `monitor`.
 - `scripts/prepare-offline-bundle.sh`: build once, collect K10 PlatformIO support files, and create a distributable `.tgz`.
+- `scripts/prepare-macos-offline-installer.sh`: create an Apple Silicon macOS self-contained installer `.tgz` with bundled K10 support files, PlatformIO wheels, wrappers, and a Blink probe project.
 - `scripts/install-offline-bundle.sh`: install a prepared bundle into a user's PlatformIO core directory.
 - `scripts/doctor-offline.sh`: verify that the required K10 PlatformIO packages are present before class.
 - `scripts/k10-pio.ps1` and `scripts/install-offline-bundle.ps1`: Windows PowerShell helpers for common operations and bundle installation.
@@ -130,7 +168,7 @@ Expected support-file sizes after first successful build vary by OS/CPU, but the
 | `packages/tool-scons` | Build tool | a few MB |
 | `packages/tool-mkfatfs`, `tool-mklittlefs`, `tool-mkspiffs` | Filesystem image tools used by some upload targets | a few MB |
 
-A minimal compressed bundle is typically hundreds of MB. Prepare one bundle per OS/architecture: macOS arm64, macOS Intel, Windows, and Linux are not interchangeable.
+A minimal compressed bundle is typically hundreds of MB. Prepare one bundle per supported OS/architecture. The self-contained macOS installer supports Apple Silicon only; Intel Macs are not supported.
 
 Bundle preparation flow:
 
@@ -139,6 +177,12 @@ Bundle preparation flow:
 bash scripts/init-k10-platformio-project.sh /tmp/k10-pio-probe
 pio run -d /tmp/k10-pio-probe
 bash scripts/prepare-offline-bundle.sh /tmp/k10-platformio-bundle.tgz
+```
+
+For macOS students who should not install PlatformIO manually, prefer the self-contained installer flow instead:
+
+```bash
+bash scripts/prepare-macos-offline-installer.sh /tmp/K10P-macos-arm64.tgz
 ```
 
 Student installation flow:

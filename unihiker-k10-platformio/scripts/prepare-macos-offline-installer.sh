@@ -1,0 +1,297 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUT_FILE="${1:-}"
+CORE_DIR="${PLATFORMIO_CORE_DIR:-$HOME/.platformio}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+PIO_BIN="${PIO_BIN:-pio}"
+
+usage() {
+  echo "Usage: $0 <output.tgz>"
+  echo "Optional: PLATFORMIO_CORE_DIR=/path/to/.platformio PYTHON_BIN=python3 PIO_BIN=pio $0 <output.tgz>"
+  exit 1
+}
+
+if [[ -z "$OUT_FILE" ]]; then
+  usage
+fi
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "[ERROR] macOS installer bundles must be prepared on macOS." >&2
+  exit 1
+fi
+
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  echo "[ERROR] Python not found: $PYTHON_BIN" >&2
+  exit 1
+fi
+
+if ! command -v "$PIO_BIN" >/dev/null 2>&1; then
+  echo "[ERROR] PlatformIO not found: $PIO_BIN" >&2
+  echo "Install PlatformIO Core on the teacher machine, build the K10 probe project once, then rerun." >&2
+  exit 1
+fi
+
+ARCH="$(uname -m)"
+if [[ "$ARCH" != "arm64" ]]; then
+  echo "[ERROR] This installer only supports Apple Silicon Macs (arm64)." >&2
+  echo "[ERROR] Current machine architecture: $ARCH" >&2
+  exit 1
+fi
+
+PKG_NAME="K10P-macos-arm64"
+STAGE="$(mktemp -d)"
+ROOT="$STAGE/$PKG_NAME"
+
+cleanup() {
+  rm -rf "$STAGE"
+}
+trap cleanup EXIT
+
+REQUIRED=(
+  "platforms/unihiker"
+  "packages/framework-arduinounihiker"
+  "packages/toolchain-riscv32-esp"
+  "packages/toolchain-xtensa-esp32"
+  "packages/toolchain-xtensa-esp32s3"
+  "packages/tool-esptoolpy"
+  "packages/tool-scons"
+  "packages/tool-mkfatfs"
+  "packages/tool-mklittlefs"
+  "packages/tool-mkspiffs"
+)
+
+missing=()
+for path in "${REQUIRED[@]}"; do
+  if [[ ! -e "$CORE_DIR/$path" ]]; then
+    missing+=("$path")
+  fi
+done
+
+if (( ${#missing[@]} > 0 )); then
+  echo "[ERROR] Missing PlatformIO support files in $CORE_DIR:" >&2
+  printf '  - %s\n' "${missing[@]}" >&2
+  echo "Build a K10 PlatformIO project once on this Mac, then rerun this script." >&2
+  exit 1
+fi
+
+mkdir -p "$ROOT/.platformio" "$ROOT/wheelhouse" "$ROOT/examples/Blink/src"
+
+copy_path() {
+  local src="$1"
+  local dest="$2"
+  mkdir -p "$(dirname "$dest")"
+  if command -v ditto >/dev/null 2>&1; then
+    ditto "$src" "$dest"
+  else
+    cp -R "$src" "$dest"
+  fi
+}
+
+for path in "${REQUIRED[@]}"; do
+  copy_path "$CORE_DIR/$path" "$ROOT/.platformio/$path"
+done
+
+echo "[INFO] Downloading PlatformIO Python wheels for offline target setup..."
+"$PYTHON_BIN" -m pip download --dest "$ROOT/wheelhouse" platformio
+
+cat > "$ROOT/examples/Blink/platformio.ini" <<'EOF'
+[env:unihiker]
+platform = https://github.com/DFRobot/platform-unihiker.git
+board = unihiker_k10
+framework = arduino
+build_flags =
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+    -DModel=None
+monitor_speed = 115200
+EOF
+
+cat > "$ROOT/examples/Blink/src/main.cpp" <<'EOF'
+#include <Arduino.h>
+#include "unihiker_k10.h"
+
+UNIHIKER_K10 k10;
+
+void setup() {
+  Serial.begin(115200);
+  k10.begin();
+  k10.initScreen(2);
+  k10.creatCanvas();
+  k10.setScreenBackground(0xFFFFFF);
+  k10.canvas->canvasText("UNIHIKER", 1, 0x0000FF);
+  k10.canvas->updateCanvas();
+}
+
+void loop() {
+  delay(1000);
+}
+EOF
+
+cat > "$ROOT/setup-platformio.command" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON_BIN="${PYTHON_BIN:-}"
+
+if [[ -z "$PYTHON_BIN" ]]; then
+  if [[ -x /usr/bin/python3 ]]; then
+    PYTHON_BIN=/usr/bin/python3
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python3)"
+  else
+    echo "[ERROR] python3 not found on this Mac." >&2
+    echo "Install Apple's Command Line Tools or Python 3, then rerun this setup." >&2
+    exit 1
+  fi
+fi
+
+echo "[INFO] K10P root: $ROOT"
+echo "[INFO] Python: $PYTHON_BIN"
+
+if [[ ! -d "$ROOT/penv" ]]; then
+  "$PYTHON_BIN" -m venv "$ROOT/penv"
+fi
+
+"$ROOT/penv/bin/python" -m pip install --no-index --find-links "$ROOT/wheelhouse" platformio
+
+export PLATFORMIO_CORE_DIR="$ROOT/.platformio"
+"$ROOT/penv/bin/python" -m platformio --version
+
+echo "[OK] K10 PlatformIO is ready."
+echo "[INFO] Test build:"
+echo "  \"$ROOT/pio\" run -d \"$ROOT/examples/Blink\""
+EOF
+
+cat > "$ROOT/pio" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY="$ROOT/penv/bin/python"
+
+if [[ ! -x "$PY" ]]; then
+  echo "[ERROR] PlatformIO environment is not set up yet." >&2
+  echo "Run: \"$ROOT/setup-platformio.command\"" >&2
+  exit 1
+fi
+
+export PLATFORMIO_CORE_DIR="$ROOT/.platformio"
+exec "$PY" -m platformio "$@"
+EOF
+
+cat > "$ROOT/platformio" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$ROOT/pio" "$@"
+EOF
+
+cat > "$ROOT/compile-project" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${1:-}"
+
+if [[ -z "$PROJECT_DIR" ]]; then
+  echo "Usage: $0 <PlatformIOProject>" >&2
+  exit 1
+fi
+
+exec "$ROOT/pio" run -d "$PROJECT_DIR"
+EOF
+
+cat > "$ROOT/upload-project" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${1:-}"
+PORT="${2:-}"
+
+if [[ -z "$PROJECT_DIR" ]]; then
+  echo "Usage: $0 <PlatformIOProject> [serial-port]" >&2
+  exit 1
+fi
+
+if [[ -n "$PORT" ]]; then
+  exec "$ROOT/pio" run -d "$PROJECT_DIR" -t upload --upload-port "$PORT"
+else
+  exec "$ROOT/pio" run -d "$PROJECT_DIR" -t upload
+fi
+EOF
+
+cat > "$ROOT/monitor-project" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${1:-}"
+PORT="${2:-}"
+
+if [[ -z "$PROJECT_DIR" ]]; then
+  echo "Usage: $0 <PlatformIOProject> [serial-port]" >&2
+  exit 1
+fi
+
+if [[ -n "$PORT" ]]; then
+  exec "$ROOT/pio" device monitor -d "$PROJECT_DIR" --port "$PORT"
+else
+  exec "$ROOT/pio" device monitor -d "$PROJECT_DIR"
+fi
+EOF
+
+cat > "$ROOT/README-macOS.txt" <<EOF
+K10 PlatformIO macOS offline installer
+======================================
+
+Prepared for: Apple Silicon macOS (arm64)
+
+1. Copy this $PKG_NAME folder from the USB drive to the Mac, for example:
+   ~/K10P
+
+2. Open Terminal and run:
+   cd ~/K10P
+   ./setup-platformio.command
+
+3. Verify:
+   ./pio --version
+   ./pio run -d ./examples/Blink
+
+4. Build or upload a student project:
+   ./compile-project "/path/to/PlatformIOProject"
+   ./upload-project "/path/to/PlatformIOProject" /dev/cu.usbmodemXXXX
+
+Notes:
+- Intel Macs are not supported by this installer.
+- The scripts use this folder's private .platformio and penv directories.
+- If macOS blocks scripts copied from the internet, run:
+  xattr -dr com.apple.quarantine ~/K10P
+EOF
+
+cat > "$ROOT/metadata.txt" <<EOF
+name=$PKG_NAME
+created_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+macos_arch=arm64
+platformio_core_dir=$CORE_DIR
+platformio_version=$("$PIO_BIN" --version)
+python=$("$PYTHON_BIN" --version 2>&1)
+EOF
+
+chmod +x \
+  "$ROOT/setup-platformio.command" \
+  "$ROOT/pio" \
+  "$ROOT/platformio" \
+  "$ROOT/compile-project" \
+  "$ROOT/upload-project" \
+  "$ROOT/monitor-project"
+
+mkdir -p "$(dirname "$OUT_FILE")"
+tar -czf "$OUT_FILE" -C "$STAGE" "$PKG_NAME"
+
+echo "[OK] macOS offline installer written: $OUT_FILE"
+du -h "$OUT_FILE" | awk '{print "[INFO] Installer size: " $1}'
+echo "[INFO] Copy this .tgz to a USB drive, extract it on Apple Silicon Macs, then run setup-platformio.command."
