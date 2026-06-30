@@ -63,24 +63,21 @@ C:\K10P\upload-project.bat "C:\path\to\PlatformIOProject" COM3
 
 ### macOS Self-Contained Offline Installer
 
-For Apple Silicon macOS workshops, prepare an offline installer folder on the teacher Mac and copy the resulting `.tgz` by USB drive. This avoids each student downloading the large K10 PlatformIO platform, framework, toolchains, and PlatformIO Python packages. Intel Macs are not supported.
+For Apple Silicon macOS workshops, prepare a self-extracting `.command` installer on the teacher Mac and copy it by USB drive. This avoids each student downloading the large K10 PlatformIO platform, framework, toolchains, and PlatformIO Python packages. Intel Macs are not supported.
 
-Prepare the Apple Silicon archive:
+Prepare the Apple Silicon self-extracting installer:
 
 ```bash
 # On a prepared teacher Mac after one successful K10 PlatformIO build
-bash scripts/prepare-macos-offline-installer.sh /tmp/K10P-macos-arm64.tgz
+bash scripts/prepare-macos-offline-installer.sh --self-extracting /tmp/K10P-macos-arm64.command
 ```
 
 On each student Mac:
 
 ```bash
-tar -xzf /Volumes/USB/K10P-macos-arm64.tgz -C "$HOME"
-mv "$HOME/K10P-macos-arm64" "$HOME/K10P"
-cd "$HOME/K10P"
-./setup-platformio.command
-./pio --version
-./pio run -d ./examples/Blink
+/Volumes/USB/K10P-macos-arm64.command
+~/K10P/pio --version
+~/K10P/pio run -d ~/K10P/examples/Blink
 ```
 
 For user projects:
@@ -92,9 +89,10 @@ For user projects:
 
 Important: use the bundled `~/K10P/pio` or `~/K10P/platformio` wrappers. They set `PLATFORMIO_CORE_DIR` to the private bundled `.platformio` directory so builds do not depend on or modify the user's global PlatformIO installation.
 
-The macOS bundle still needs a local `python3` to create its private virtual environment. It does not need internet during student setup. If macOS blocks files copied from a downloaded archive, remove quarantine on the copied folder:
+The macOS bundle still needs a local `python3` to create its private virtual environment. It does not need internet during student setup. If macOS blocks files copied from a downloaded archive, remove quarantine on the installer or copied folder:
 
 ```bash
+xattr -d com.apple.quarantine /Volumes/USB/K10P-macos-arm64.command
 xattr -dr com.apple.quarantine "$HOME/K10P"
 ```
 
@@ -182,7 +180,7 @@ bash scripts/prepare-offline-bundle.sh /tmp/k10-platformio-bundle.tgz
 For macOS students who should not install PlatformIO manually, prefer the self-contained installer flow instead:
 
 ```bash
-bash scripts/prepare-macos-offline-installer.sh /tmp/K10P-macos-arm64.tgz
+bash scripts/prepare-macos-offline-installer.sh --self-extracting /tmp/K10P-macos-arm64.command
 ```
 
 Student installation flow:

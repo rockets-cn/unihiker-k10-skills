@@ -36,27 +36,24 @@ Make one bundle per supported OS and CPU architecture. Do not share a macOS arm6
 
 ## macOS Self-Contained USB Installer
 
-Use this for Apple Silicon Macs when students should not install PlatformIO or download Python packages during class. The package is a relocatable folder archive, not a system-wide `.pkg`; it does not need administrator permissions and can be copied from a USB drive. Intel Macs are not supported.
+Use this for Apple Silicon Macs when students should not install PlatformIO or download Python packages during class. The package is a self-extracting `.command` file, not a system-wide `.pkg`; it does not need administrator permissions and can be copied from a USB drive. Intel Macs are not supported.
 
 On a prepared teacher Mac:
 
 ```bash
 bash scripts/init-k10-platformio-project.sh /tmp/k10-pio-probe
 pio run -d /tmp/k10-pio-probe
-bash scripts/prepare-macos-offline-installer.sh /tmp/K10P-macos-arm64.tgz
+bash scripts/prepare-macos-offline-installer.sh --self-extracting /tmp/K10P-macos-arm64.command
 ```
 
-Copy the resulting `.tgz` to the USB drive.
+Copy the resulting `.command` file to the USB drive.
 
 On each student Mac:
 
 ```bash
-tar -xzf /Volumes/USB/K10P-macos-arm64.tgz -C "$HOME"
-mv "$HOME/K10P-macos-arm64" "$HOME/K10P"
-cd "$HOME/K10P"
-./setup-platformio.command
-./pio --version
-./pio run -d ./examples/Blink
+/Volumes/USB/K10P-macos-arm64.command
+~/K10P/pio --version
+~/K10P/pio run -d ~/K10P/examples/Blink
 ```
 
 Then use the bundled wrappers:
@@ -67,11 +64,12 @@ Then use the bundled wrappers:
 ~/K10P/monitor-project "/path/to/PlatformIOProject" /dev/cu.usbmodemXXXX
 ```
 
-The setup script creates a private `penv` inside `~/K10P` and installs PlatformIO from the included `wheelhouse` using `--no-index`. It also uses the bundled `~/K10P/.platformio` support directory for K10 toolchains and framework files. Student setup should not need internet after the archive has been prepared.
+The self-extracting installer unpacks into `~/K10P`, creates a private `penv`, and installs PlatformIO from the included `wheelhouse` using `--no-index`. It also uses the bundled `~/K10P/.platformio` support directory for K10 toolchains and framework files. Student setup should not need internet after the installer has been prepared.
 
 macOS still needs a local `python3` executable to create the private virtual environment. If it is missing, install Apple's Command Line Tools or Python 3 before class. If Gatekeeper quarantine blocks the copied scripts, run:
 
 ```bash
+xattr -d com.apple.quarantine /Volumes/USB/K10P-macos-arm64.command
 xattr -dr com.apple.quarantine "$HOME/K10P"
 ```
 
