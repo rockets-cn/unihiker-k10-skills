@@ -1,6 +1,6 @@
 ---
 name: unihiker-k10-platformio
-description: Use when programming a UNIHIKER K10 board with PlatformIO CLI, creating or converting Arduino/C++ K10 projects to PlatformIO, building, uploading, monitoring serial output, diagnosing K10 PlatformIO setup, or preparing/installing offline PlatformIO support bundles for workshops where many students should not download toolchains at the same time.
+description: Use when programming a UNIHIKER K10 board with PlatformIO CLI, creating or converting Arduino/C++ K10 projects to PlatformIO, building, uploading, monitoring serial output, diagnosing K10 PlatformIO setup, or preparing/installing offline PlatformIO support for workshops, including macOS archives and Windows self-extracting USB installers.
 ---
 
 # UNIHIKER K10 - PlatformIO
@@ -33,6 +33,14 @@ Screen refresh policy: generated K10 display code must prefer partial redraws. F
 ### Windows Self-Contained Offline Installer
 
 For Windows machines with no PlatformIO or Python environment installed, use the self-contained K10 PlatformIO offline installer first. It installs an isolated PlatformIO environment and does not require system `pio`.
+
+Prepare the Windows x64 self-extracting installer on a teacher Windows machine after one successful K10 PlatformIO build:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\prepare-windows-offline-installer.ps1 C:\tmp\K10P-windows-x64.exe
+```
+
+Copy the resulting `.exe` to the USB drive. Run it on each student Windows machine; it extracts to `C:\K10P` and runs `setup-platformio.bat`.
 
 Known install locations to check, in order:
 
@@ -143,6 +151,7 @@ pio device monitor -d my-k10-project --port /dev/cu.usbmodemXXXX
 - `scripts/k10-pio.sh`: convenience wrapper for `doctor`, `ports`, `build`, `upload`, and `monitor`.
 - `scripts/prepare-offline-bundle.sh`: build once, collect K10 PlatformIO support files, and create a distributable `.tgz`.
 - `scripts/prepare-macos-offline-installer.sh`: create an Apple Silicon macOS self-contained installer `.tgz` with bundled K10 support files, PlatformIO wheels, wrappers, and a Blink probe project.
+- `scripts/prepare-windows-offline-installer.ps1`: create a Windows x64 self-extracting installer `.exe` with bundled K10 support files, PlatformIO Python runtime, wrappers, and a Blink probe project. Passing a `.zip` output path is still supported as a fallback archive format.
 - `scripts/install-offline-bundle.sh`: install a prepared bundle into a user's PlatformIO core directory.
 - `scripts/doctor-offline.sh`: verify that the required K10 PlatformIO packages are present before class.
 - `scripts/k10-pio.ps1` and `scripts/install-offline-bundle.ps1`: Windows PowerShell helpers for common operations and bundle installation.
@@ -181,6 +190,12 @@ For macOS students who should not install PlatformIO manually, prefer the self-c
 
 ```bash
 bash scripts/prepare-macos-offline-installer.sh --self-extracting /tmp/K10P-macos-arm64.command
+```
+
+For Windows students who should not install PlatformIO or Python manually, prefer the self-contained installer flow instead:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\prepare-windows-offline-installer.ps1 C:\tmp\K10P-windows-x64.exe
 ```
 
 Student installation flow:
@@ -263,3 +278,4 @@ Use `unihiker-init-cn` for the Chinese model and `unihiker-init-en` for the Engl
 - Read `references/k10-ai-model-flash.md` for AI model partitions, OTA compatibility, and recovery workflow.
 - Read `references/k10-arduino-api.md` for K10 API signatures.
 - Read `references/k10-arduino-examples.md` for complete K10 Arduino examples. The C++ APIs are the same as Arduino mode; only the build/upload toolchain changes.
+

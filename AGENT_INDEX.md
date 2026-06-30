@@ -19,7 +19,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Create, fix, compile, or upload an Arduino sketch | `unihiker-k10-arduino` | Read Arduino API references before using K10-specific classes. |
 | Set up Arduino CLI or K10 BSP | `unihiker-k10-arduino` | Configure both the K10 BSP URL and an ESP32 Core URL before installing `UNIHIKER:esp32`. |
 | Create, fix, compile, upload, or monitor a PlatformIO K10 project | `unihiker-k10-platformio` | Read PlatformIO workflow notes and the bundled K10 Arduino API references before using K10-specific classes. |
-| Prepare or install a PlatformIO offline workshop bundle | `unihiker-k10-platformio` | Use the PlatformIO bundle scripts; prepare one bundle per OS/CPU architecture. |
+| Prepare or install a PlatformIO offline workshop bundle or USB installer | `unihiker-k10-platformio` | Use the PlatformIO bundle scripts; prepare one bundle or self-contained installer per OS/CPU architecture. |
 | Diagnose serial upload or port issues | `unihiker-k10-arduino` or `unihiker-k10-micropython` | Use the matching `find-port` or upload script instead of inventing port detection logic. |
 | Diagnose PlatformIO build, package, upload, or port issues | `unihiker-k10-platformio` | Use `k10-pio.sh`, `pio device list`, and `doctor-offline.sh` before changing project code. |
 | Flash MicroPython firmware | `unihiker-k10-micropython` | Use the bundled firmware and the documented BOOT/RST download-mode sequence. |
@@ -54,7 +54,7 @@ Use scripts when the task involves deterministic device operations:
 | Arduino serial upload | `unihiker-k10-arduino/scripts/upload-arduino.sh`, `upload-arduino.ps1`, `upload_k10.py`, or `upload-k10.bat` |
 | Arduino OTA compile/upload | `unihiker-k10-arduino/scripts/compile-ota.sh` or `compile-ota.ps1` |
 | PlatformIO project setup/build/upload/monitor | `unihiker-k10-platformio/scripts/init-k10-platformio-project.sh` or `k10-pio.sh` / `k10-pio.ps1` |
-| PlatformIO workshop offline bundle | `unihiker-k10-platformio/scripts/prepare-offline-bundle.sh`, `install-offline-bundle.sh`, `install-offline-bundle.ps1`, or `doctor-offline.sh` |
+| PlatformIO workshop offline bundle | `unihiker-k10-platformio/scripts/prepare-offline-bundle.sh`, `prepare-macos-offline-installer.sh`, `prepare-windows-offline-installer.ps1`, `install-offline-bundle.sh`, `install-offline-bundle.ps1`, or `doctor-offline.sh` |
 | MicroPython firmware flashing | `unihiker-k10-micropython/scripts/flash-micropython.sh` or `flash-mp-auto.sh` |
 | MicroPython file upload | `unihiker-k10-micropython/scripts/upload-micropython.sh` |
 | HTTP OTA binary upload | `unihiker-k10-ota/scripts/ota_upload.py` or `ota_upload.ps1` |
@@ -74,3 +74,4 @@ bash -n unihiker-k10-micropython/scripts/*.sh
 ```
 
 For code generation tasks, verification should also include the appropriate compile, upload dry run, or firmware-flashing preflight when hardware access is available.
+

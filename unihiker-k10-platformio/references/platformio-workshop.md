@@ -73,6 +73,39 @@ xattr -d com.apple.quarantine /Volumes/USB/K10P-macos-arm64.command
 xattr -dr com.apple.quarantine "$HOME/K10P"
 ```
 
+## Windows Self-Contained USB Installer
+
+Use this for Windows x64 workshops when students should not install PlatformIO or Python and should not download packages during class. The package is a relocatable folder archive, not a system-wide installer; it does not need administrator permissions and can be copied from a USB drive.
+
+On a prepared teacher Windows machine:
+
+```powershell
+# First build any K10 PlatformIO project successfully so PlatformIO downloads all support files.
+pio run -d C:\path\to\k10-pio-probe
+powershell -ExecutionPolicy Bypass -File scripts\prepare-windows-offline-installer.ps1 C:\tmp\K10P-windows-x64.exe
+```
+
+Copy the resulting `.exe` to the USB drive.
+
+On each student Windows machine, run the self-extracting installer:
+
+```powershell
+E:\K10P-windows-x64.exe
+cd C:\K10P
+.\pio.bat --version
+.\pio.bat run -d .\examples\Blink
+```
+
+For user projects, prefer the bundled wrappers:
+
+```powershell
+C:\K10P\compile-project.bat "C:\path\to\PlatformIOProject"
+C:\K10P\upload-project.bat "C:\path\to\PlatformIOProject" COM3
+C:\K10P\monitor-project.bat "C:\path\to\PlatformIOProject" COM3
+```
+
+Keep both the installer folder and student projects in short paths such as `C:\K10P` and `C:\K10Work`. The wrappers set `PLATFORMIO_CORE_DIR` and `PYTHONPATH` to the private bundled `.platformio` directory. Students should use the bundled `pio.bat` or `platformio.bat`, not a system `pio` command.
+
 ## Install on Student Machines
 
 Copy the bundle by USB drive, local file share, or classroom LAN. Then run:
@@ -135,3 +168,4 @@ platform = https://github.com/DFRobot/platform-unihiker.git#508e31875ad92205bf94
 ```
 
 Pinning prevents a later GitHub update from invalidating the prepared cache.
+
