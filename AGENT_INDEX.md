@@ -20,6 +20,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Set up Arduino CLI or K10 BSP | `unihiker-k10-arduino` | Configure both the K10 BSP URL and an ESP32 Core URL before installing `UNIHIKER:esp32`. |
 | Create, fix, compile, upload, or monitor a PlatformIO K10 project | `unihiker-k10-platformio` | Read PlatformIO workflow notes and the bundled K10 Arduino API references before using K10-specific classes. |
 | Prepare or install a PlatformIO offline workshop bundle or USB installer | `unihiker-k10-platformio` | Use the PlatformIO bundle scripts; prepare one bundle or self-contained installer per OS/CPU architecture. |
+| Diagnose macOS PlatformIO offline installer pip dependency errors | `unihiker-k10-platformio` | Read `references/platformio-workshop.md`; missing `typing-extensions` means the installer was built with an older wheelhouse. |
 | Diagnose serial upload or port issues | `unihiker-k10-arduino` or `unihiker-k10-micropython` | Use the matching `find-port` or upload script instead of inventing port detection logic. |
 | Diagnose PlatformIO build, package, upload, or port issues | `unihiker-k10-platformio` | Use `k10-pio.sh`, `pio device list`, and `doctor-offline.sh` before changing project code. |
 | Flash MicroPython firmware | `unihiker-k10-micropython` | Use the bundled firmware and the documented BOOT/RST download-mode sequence. |
@@ -74,4 +75,3 @@ bash -n unihiker-k10-micropython/scripts/*.sh
 ```
 
 For code generation tasks, verification should also include the appropriate compile, upload dry run, or firmware-flashing preflight when hardware access is available.
-

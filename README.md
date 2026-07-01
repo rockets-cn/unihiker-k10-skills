@@ -144,6 +144,8 @@ powershell -ExecutionPolicy Bypass -File .\unihiker-k10-platformio\scripts\prepa
 
 Students can run `K10P-windows-x64.exe` from the USB drive; it installs the bundled PlatformIO environment to `C:\K10P`.
 
+The macOS self-contained installer bundles PlatformIO Python wheels, including conditional dependencies such as `typing-extensions` for student Macs running Python older than 3.13. If an older installer fails offline with `No matching distribution found for typing-extensions`, rebuild it with the current `prepare-macos-offline-installer.sh`.
+
 ## MicroPython Quick Start
 
 1. Install the flashing and upload tools:
@@ -258,4 +260,3 @@ bash -n unihiker-k10-arduino/scripts/*.sh
 bash -n unihiker-k10-platformio/scripts/*.sh
 bash -n unihiker-k10-micropython/scripts/*.sh
 ```
-

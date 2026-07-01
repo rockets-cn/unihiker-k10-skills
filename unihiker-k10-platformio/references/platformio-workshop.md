@@ -66,6 +66,12 @@ Then use the bundled wrappers:
 
 The self-extracting installer unpacks into `~/K10P`, creates a private `penv`, and installs PlatformIO from the included `wheelhouse` using `--no-index`. It also uses the bundled `~/K10P/.platformio` support directory for K10 toolchains and framework files. Student setup should not need internet after the installer has been prepared.
 
+The macOS wheelhouse explicitly includes `typing-extensions` for student Macs running Python older than 3.13. If an older installer fails with `No matching distribution found for typing-extensions>=4.10.0`, rebuild the installer with the current `prepare-macos-offline-installer.sh`. For a one-off repair on an extracted `~/K10P`, download the missing wheel on an internet-connected machine and copy it into `~/K10P/wheelhouse`:
+
+```bash
+python3 -m pip download --dest /path/to/K10P/wheelhouse "typing-extensions>=4.10.0"
+```
+
 macOS still needs a local `python3` executable to create the private virtual environment. If it is missing, install Apple's Command Line Tools or Python 3 before class. If Gatekeeper quarantine blocks the copied scripts, run:
 
 ```bash
@@ -168,4 +174,3 @@ platform = https://github.com/DFRobot/platform-unihiker.git#508e31875ad92205bf94
 ```
 
 Pinning prevents a later GitHub update from invalidating the prepared cache.
-

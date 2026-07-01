@@ -104,6 +104,8 @@ xattr -d com.apple.quarantine /Volumes/USB/K10P-macos-arm64.command
 xattr -dr com.apple.quarantine "$HOME/K10P"
 ```
 
+If macOS setup fails offline with `No matching distribution found for typing-extensions>=4.10.0`, the installer was built with an older script that omitted a conditional PlatformIO dependency needed by Python older than 3.13. Rebuild the installer with `scripts/prepare-macos-offline-installer.sh`, or add `typing-extensions` to the extracted `wheelhouse`.
+
 Before writing K10 application code, read the relevant local references:
 
 - `references/k10-arduino-api.md` for K10 C++ API signatures.
@@ -278,4 +280,3 @@ Use `unihiker-init-cn` for the Chinese model and `unihiker-init-en` for the Engl
 - Read `references/k10-ai-model-flash.md` for AI model partitions, OTA compatibility, and recovery workflow.
 - Read `references/k10-arduino-api.md` for K10 API signatures.
 - Read `references/k10-arduino-examples.md` for complete K10 Arduino examples. The C++ APIs are the same as Arduino mode; only the build/upload toolchain changes.
-

@@ -101,6 +101,13 @@ done
 
 echo "[INFO] Downloading PlatformIO Python wheels for offline target setup..."
 "$PYTHON_BIN" -m pip download --dest "$ROOT/wheelhouse" platformio
+"$PYTHON_BIN" -m pip download --dest "$ROOT/wheelhouse" "typing-extensions>=4.10.0"
+
+if ! find "$ROOT/wheelhouse" -maxdepth 1 -type f -iname 'typing_extensions-*.whl' | grep -q .; then
+  echo "[ERROR] Failed to add typing-extensions to the offline wheelhouse." >&2
+  echo "This wheel is required when student Macs use Python older than 3.13." >&2
+  exit 1
+fi
 
 cat > "$ROOT/examples/Blink/platformio.ini" <<'EOF'
 [env:unihiker]
