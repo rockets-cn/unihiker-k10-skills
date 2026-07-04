@@ -19,6 +19,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Create, fix, compile, or upload an Arduino sketch | `unihiker-k10-arduino` | Read Arduino API references before using K10-specific classes. |
 | Set up Arduino CLI or K10 BSP | `unihiker-k10-arduino` | Configure both the K10 BSP URL and an ESP32 Core URL before installing `UNIHIKER:esp32`. |
 | Create, fix, compile, upload, or monitor a PlatformIO K10 project | `unihiker-k10-platformio` | Read PlatformIO workflow notes and the bundled K10 Arduino API references before using K10-specific classes. |
+| Compile a PlatformIO K10 project through the LAN server and flash it from a client browser | `k10-compile-server` | Prefer `--web-serial` / `-WebSerial`; use `references/server-setup.md` if the user needs to self-host `rockets-cn/unihiker-k10-compile-server`. |
 | Prepare or install a PlatformIO offline workshop bundle or USB installer | `unihiker-k10-platformio` | Use the PlatformIO bundle scripts; prepare one bundle or self-contained installer per OS/CPU architecture. |
 | Diagnose macOS PlatformIO offline installer pip dependency errors | `unihiker-k10-platformio` | Read `references/platformio-workshop.md`; missing `typing-extensions` means the installer was built with an older wheelhouse. |
 | Diagnose serial upload or port issues | `unihiker-k10-arduino` or `unihiker-k10-micropython` | Use the matching `find-port` or upload script instead of inventing port detection logic. |
@@ -55,6 +56,7 @@ Use scripts when the task involves deterministic device operations:
 | Arduino serial upload | `unihiker-k10-arduino/scripts/upload-arduino.sh`, `upload-arduino.ps1`, `upload_k10.py`, or `upload-k10.bat` |
 | Arduino OTA compile/upload | `unihiker-k10-arduino/scripts/compile-ota.sh` or `compile-ota.ps1` |
 | PlatformIO project setup/build/upload/monitor | `unihiker-k10-platformio/scripts/init-k10-platformio-project.sh` or `k10-pio.sh` / `k10-pio.ps1` |
+| LAN server compile and Web Serial firmware upload | `k10-compile-server/scripts/compile-project.sh --web-serial` or `compile-project.ps1 -WebSerial` |
 | PlatformIO workshop offline bundle | `unihiker-k10-platformio/scripts/prepare-offline-bundle.sh`, `prepare-macos-offline-installer.sh`, `prepare-windows-offline-installer.ps1`, `install-offline-bundle.sh`, `install-offline-bundle.ps1`, or `doctor-offline.sh` |
 | MicroPython firmware flashing | `unihiker-k10-micropython/scripts/flash-micropython.sh` or `flash-mp-auto.sh` |
 | MicroPython file upload | `unihiker-k10-micropython/scripts/upload-micropython.sh` |
@@ -67,10 +69,12 @@ Run the relevant checks after documentation or skill changes:
 ```bash
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-arduino
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-platformio
+python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py k10-compile-server
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-micropython
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-ota
 bash -n unihiker-k10-arduino/scripts/*.sh
 bash -n unihiker-k10-platformio/scripts/*.sh
+bash -n k10-compile-server/scripts/*.sh
 bash -n unihiker-k10-micropython/scripts/*.sh
 ```
 

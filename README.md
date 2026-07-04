@@ -8,6 +8,7 @@ Local Codex skills for working with the DFRobot Unihiker K10 board. Install thes
 | --- | --- | --- |
 | `unihiker-k10-arduino` | Arduino/C++ sketches, K10 BSP setup, serial upload, Arduino API lookup, screen/sensor/RGB/audio/AI examples. | Uses FQBN `UNIHIKER:esp32:k10`; includes Windows `arduino-cli.exe`; documents Arduino CLI `build_cache.*` rather than older cache keys. |
 | `unihiker-k10-platformio` | PlatformIO CLI projects, K10 Arduino/C++ builds, serial upload, monitoring, and workshop offline support bundles. | Uses DFRobot's `platform-unihiker`; includes macOS archives and Windows self-extracting USB installers for offline workshops. |
+| `k10-compile-server` | Remote LAN compilation for PlatformIO K10 projects, browser Web Serial flashing, firmware download, and server-side USB flash. | Use an existing HTTPS compile server on port 8900, or self-host from `rockets-cn/unihiker-k10-compile-server`; preferred client upload needs only Chrome/Edge. |
 | `unihiker-k10-micropython` | Flashing MicroPython, uploading `main.py`, MicroPython API lookup, REPL-oriented troubleshooting. | Bundles K10 MicroPython firmware `v0.9.2`; only `main.py` auto-runs after reset. |
 | `unihiker-k10-ota` | Adding HTTP OTA update support to Arduino or PlatformIO projects. | Requires a custom partition table with `ota_0` and `ota_1`; AI projects must preserve the K10 model partitions. |
 
@@ -19,6 +20,7 @@ Agents should read `AGENT_INDEX.md` first, then load only the matching skill for
 | --- | --- |
 | Arduino sketch, C++ API, serial upload, K10 BSP setup | `unihiker-k10-arduino/SKILL.md` |
 | PlatformIO CLI project, PlatformIO upload, offline workshop bundle | `unihiker-k10-platformio/SKILL.md` |
+| LAN compile server build, browser Web Serial flash, firmware download, server-side flash | `k10-compile-server/SKILL.md` |
 | MicroPython firmware, `main.py`, `mpremote`, Python API | `unihiker-k10-micropython/SKILL.md` |
 | Wireless Arduino firmware update, HTTP OTA, ESP-NOW maintenance OTA mode | `unihiker-k10-ota/SKILL.md` |
 | AI model recovery, voice/TTS/face AI with OTA partitions | `references/k10-ai-model-flash.md` plus the matching toolchain skill |
@@ -33,6 +35,7 @@ Copy or symlink every skill folder into your Codex skills directory:
 mkdir -p ~/.agents/skills
 cp -R unihiker-k10-arduino ~/.agents/skills/
 cp -R unihiker-k10-platformio ~/.agents/skills/
+cp -R k10-compile-server ~/.agents/skills/
 cp -R unihiker-k10-micropython ~/.agents/skills/
 cp -R unihiker-k10-ota ~/.agents/skills/
 ```
@@ -43,6 +46,7 @@ On Windows PowerShell:
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills"
 Copy-Item -Recurse .\unihiker-k10-arduino "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-platformio "$env:USERPROFILE\.agents\skills\"
+Copy-Item -Recurse .\k10-compile-server "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-micropython "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-ota "$env:USERPROFILE\.agents\skills\"
 ```
@@ -232,6 +236,7 @@ Toolchain-specific recovery notes are in `references/k10-ai-model-flash.md` and 
 ```text
 unihiker-k10-arduino/       Arduino skill, upload scripts, API references, examples
 unihiker-k10-platformio/    PlatformIO skill, offline bundle scripts, API references
+k10-compile-server/         LAN compile server skill, remote build and browser/server USB upload scripts
 unihiker-k10-micropython/   MicroPython skill, flash/upload scripts, firmware, API reference
 unihiker-k10-ota/           HTTP OTA skill, implementation guide, upload scripts
 references/                 Shared repository-level K10 notes, including AI model recovery
@@ -249,6 +254,7 @@ Validate skill frontmatter after changing `SKILL.md`:
 ```bash
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-arduino
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-platformio
+python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py k10-compile-server
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-micropython
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-ota
 ```
@@ -258,5 +264,6 @@ Run shell syntax checks after editing Bash scripts:
 ```bash
 bash -n unihiker-k10-arduino/scripts/*.sh
 bash -n unihiker-k10-platformio/scripts/*.sh
+bash -n k10-compile-server/scripts/*.sh
 bash -n unihiker-k10-micropython/scripts/*.sh
 ```
