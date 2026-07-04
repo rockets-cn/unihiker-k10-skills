@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($Server)) {
-  $Server = "https://localhost:8900"
+  throw "Server URL is required. Pass -Server https://your-k10-compile-server.example.com:8900 or set COMPILE_SERVER."
 }
 $Server = $Server.TrimEnd("/")
 
@@ -205,6 +205,7 @@ try {
     Write-Host "Opening Web Serial flash page:"
     Write-Host "  $WebSerialUrl"
     Write-Host "Use Chrome/Edge, click 浏览器烧录, and choose the K10 serial port."
+    Write-Host "The page tries automatic bootloader entry first; use BOOT/RST only if prompted."
     try {
       Start-Process $WebSerialUrl
     } catch {

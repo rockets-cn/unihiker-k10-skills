@@ -7,7 +7,7 @@ description: Use when compiling UNIHIKER K10 PlatformIO projects via the K10 Com
 
 ## Overview
 
-The K10 Compile Server is a FastAPI service running on **port 8900** (HTTPS) that compiles UNIHIKER K10 PlatformIO projects remotely. Instead of installing PlatformIO + toolchains locally, upload your project, get a `build_id`, and flash from the browser with Web Serial.
+The K10 Compile Server is a FastAPI service running on **port 8900** (HTTPS) that compiles UNIHIKER K10 PlatformIO projects remotely. Instead of installing PlatformIO + toolchains locally, submit the project with the helper script, get a `build_id`, and flash from the browser with Web Serial.
 
 Use an existing LAN server, or self-host one from the public server repo:
 
@@ -21,27 +21,28 @@ If `platformio.ini` references `partitions.csv`, the server expects that file to
 
 ## Configuration
 
-**服务器地址：** 根据你的网络环境设置 `COMPILE_SERVER` 环境变量，或在命令中通过 `--server` 指定。
+**服务器地址：** 必须来自用户提供的服务器 URL、`COMPILE_SERVER` 环境变量，或项目/对话中已经明确确认过的地址。不要猜测、不要写死公共域名；如果不知道服务器地址，先问用户：“你的 K10 编译服务器地址是什么（例如 `https://k10.example.com:8900`）？”
 
 ```bash
 # 方式 A：环境变量（推荐，一次设置一直用）
-export COMPILE_SERVER=https://<server-ip>:8900
+export COMPILE_SERVER=https://your-k10-compile-server.example.com:8900
 
 # 方式 B：每次命令指定
 bash k10-compile-server/scripts/compile-project.sh \
-  --server https://<server-ip>:8900 \
-  --dir /path/to/k10-project
+  --server https://your-k10-compile-server.example.com:8900 \
+  --dir /path/to/k10-project \
+  --web-serial
 ```
 
-默认地址是 `https://localhost:8900`（服务器本机）。局域网客户端请设置 `COMPILE_SERVER=https://<server-ip>:8900`；可在服务器上通过 `ip a` 或 `ifconfig` 查看实际 IP。
+自建服务器时，把上面的地址替换为 `https://<server-ip>:8900` 或你的域名。
 
 ## Quick Start
 
 ```bash
 # 方式 A：环境变量（推荐，设一次就不用每次都写 --server）
-export COMPILE_SERVER=https://<server-ip>:8900
+export COMPILE_SERVER=https://your-k10-compile-server.example.com:8900
 
-# 1. Use the helper script (recommended)
+# Recommended: compile remotely, then open the preloaded Web Serial flash page.
 bash k10-compile-server/scripts/compile-project.sh \
   --server $COMPILE_SERVER \
   --dir /path/to/k10-project \
@@ -52,7 +53,7 @@ On Windows clients, prefer the PowerShell helper so the workflow does not depend
 
 ```powershell
 .\k10-compile-server\scripts\compile-project.ps1 `
-  -Server https://<server-ip>:8900 `
+  -Server https://your-k10-compile-server.example.com:8900 `
   -Dir C:\path\to\k10-project `
   -WebSerial
 ```
@@ -64,6 +65,8 @@ https://<server-ip>:8900/?build_id=<build_id>
 ```
 
 Use Chrome/Edge, click "浏览器烧录", choose the K10 serial port, and let the page flash and reset the board.
+
+Do **not** tell users to manually upload files in the web page or type a build ID for the normal workflow. The normal workflow is helper script → completed `build_id` → auto-open `?build_id=<build_id>` → click browser flash. Manual web upload is only a fallback when the helper script cannot be used.
 
 Choose the upload mode explicitly:
 
@@ -105,7 +108,9 @@ cd /path/to/unihiker-k10-compile-server/server
 bash restart.sh
 ```
 
-## Compile a Project
+## Compile a Project Manually (advanced/fallback)
+
+Use this section only when the helper scripts cannot be used. For normal use, prefer `--web-serial` / `-WebSerial`.
 
 ### Step 1: Zip the project
 
@@ -121,7 +126,7 @@ zip -r /tmp/k10-project.zip . \
 ### Step 2: Submit to compile server
 
 ```bash
-SERVER="https://<server-ip>:8900"
+SERVER="${COMPILE_SERVER:?Set COMPILE_SERVER to your K10 compile server URL first}"
 
 # Upload zip → get build_id
 RESP=$(curl -sk -X POST "$SERVER/api/compile" \
@@ -180,13 +185,13 @@ The standard ESP32-S3 flash layout is:
 
 ## Flash from Browser (Web Serial)
 
-The compile server's web page at `https://<server-ip>:8900/?build_id=<id>` supports direct browser-based flashing of API/CLI-created builds:
+The compile server's web page at `<server-url>/?build_id=<id>` supports direct browser-based flashing of API/CLI-created builds:
 
 1. Compile with `--web-serial` / `-WebSerial`, or otherwise obtain a completed `build_id`.
-2. Open `https://<server-ip>:8900/?build_id=<build_id>` in Chrome/Edge.
+2. Open the generated `<server-url>/?build_id=<build_id>` URL in Chrome/Edge.
 3. Click "⚡ 浏览器烧录".
 4. Select the K10 serial port when prompted.
-5. Let the page enter download mode, flash, reset, and release the serial port.
+5. Let the page automatically enter download mode, flash, reset, and release the serial port.
 
 Requirements: Chrome/Edge, HTTPS, USB-C connection to the K10 board.
 
@@ -194,7 +199,7 @@ This mode requires no local PlatformIO, no local K10 toolchain, and no local `es
 
 The server frontend must support `?build_id=<id>` and initialize its flash manifest from `/api/build/<id>/flash-files`.
 
-If automatic reset is unreliable, the page should show a BOOT/RST fallback. On current server builds, flashing completion uses a DTR/RTS reset-to-firmware sequence and releases the Web Serial connection.
+The page first tries automatic reset (`default_reset`) and only shows a BOOT/RST fallback if automatic entry fails. Do not instruct users to hold BOOT and tap RST as the default path. On current server builds, flashing completion uses a DTR/RTS reset-to-firmware sequence and releases the Web Serial connection.
 
 ## Flash from Server
 
@@ -208,7 +213,7 @@ Or via the helper script:
 
 ```bash
 bash k10-compile-server/scripts/compile-project.sh \
-  --server https://<server-ip>:8900 \
+  --server https://your-k10-compile-server.example.com:8900 \
   --dir /path/to/k10-project \
   --flash
 ```
@@ -221,7 +226,7 @@ If the K10 is connected via USB to the **client machine** running Codex, compile
 
 ```bash
 bash k10-compile-server/scripts/compile-project.sh \
-  --server https://<server-ip>:8900 \
+  --server https://your-k10-compile-server.example.com:8900 \
   --dir /path/to/k10-project \
   --upload-local \
   --port /dev/cu.usbmodemXXXX
@@ -231,7 +236,7 @@ Windows PowerShell:
 
 ```powershell
 .\k10-compile-server\scripts\compile-project.ps1 `
-  -Server https://<server-ip>:8900 `
+  -Server https://your-k10-compile-server.example.com:8900 `
   -Dir C:\path\to\k10-project `
   -UploadLocal `
   -Port COM3
@@ -264,7 +269,7 @@ If automatic reset does not enter the bootloader, hold BOOT, tap RST, then relea
 ```bash
 # Complete pipeline: zip → submit → poll → open browser flash page
 bash k10-compile-server/scripts/compile-project.sh \
-  --server https://<server-ip>:8900 \
+  --server https://your-k10-compile-server.example.com:8900 \
   --dir /path/to/k10-project \
   --web-serial
 ```
@@ -273,7 +278,7 @@ Remote compile and firmware download only:
 
 ```bash
 bash k10-compile-server/scripts/compile-project.sh \
-  --server https://<server-ip>:8900 \
+  --server https://your-k10-compile-server.example.com:8900 \
   --dir /path/to/k10-project \
   --output ./firmware.bin
 ```

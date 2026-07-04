@@ -4,7 +4,7 @@ set -euo pipefail
 # ──────────────────────────────────────────────────────────────
 # K10 Compile Server - Project Compile Helper
 # Usage:
-#   export COMPILE_SERVER=https://<server-ip>:8900    # 设一次即可
+#   export COMPILE_SERVER=https://your-k10-compile-server.example.com:8900    # 设一次即可
 #   bash k10-compile-server/scripts/compile-project.sh \
 #     --server $COMPILE_SERVER \
 #     --dir /path/to/k10-project \
@@ -30,8 +30,8 @@ set -euo pipefail
 #     --port /dev/cu.usbmodemXXXX
 # ──────────────────────────────────────────────────────────────
 
-# Default: use COMPILE_SERVER env var, fall back to localhost
-SERVER="${COMPILE_SERVER:-https://localhost:8900}"
+# Default: use COMPILE_SERVER env var; do not guess a server URL.
+SERVER="${COMPILE_SERVER:-}"
 PROJECT_DIR=""
 OUTPUT=""
 FLASH=false
@@ -45,7 +45,7 @@ COMPILE_TIMEOUT=300
 usage() {
   echo "Usage: $0 --server <url> --dir <project-dir> [--output <path>] [--web-serial] [--flash] [--upload-local] [--port <port>] [--baud <baud>]"
   echo ""
-  echo "  --server       Compile server URL (e.g. https://<server-ip>:8900)"
+  echo "  --server       Compile server URL (or set \$COMPILE_SERVER)"
   echo "  --dir          K10 PlatformIO project directory"
   echo "  --output       Output path for firmware.bin (default: ./firmware-<build_id>.bin)"
   echo "  --web-serial   Open browser Web Serial flash page after compile (recommended client upload)"
@@ -75,7 +75,7 @@ done
 # ── Validate ──────────────────────────────────────────────────
 
 if [[ -z "$SERVER" || -z "$PROJECT_DIR" ]]; then
-  echo "❌ --server and --dir are required"
+  echo "❌ --server and --dir are required. You can also set COMPILE_SERVER for the server URL."
   usage
 fi
 
@@ -291,6 +291,7 @@ if [[ "$WEB_SERIAL" == true ]]; then
   echo "🌐 Opening Web Serial flash page:"
   echo "   $WEB_SERIAL_URL"
   echo "   Use Chrome/Edge, click 浏览器烧录, and choose the K10 serial port."
+  echo "   The page tries automatic bootloader entry first; use BOOT/RST only if prompted."
   if ! open_url "$WEB_SERIAL_URL"; then
     echo "⚠️  Could not open the browser automatically. Open this URL manually:"
     echo "   $WEB_SERIAL_URL"
