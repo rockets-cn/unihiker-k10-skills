@@ -24,6 +24,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Diagnose macOS PlatformIO offline installer pip dependency errors | `unihiker-k10-platformio` | Read `references/platformio-workshop.md`; missing `typing-extensions` means the installer was built with an older wheelhouse. |
 | Diagnose serial upload or port issues | `unihiker-k10-arduino` or `unihiker-k10-micropython` | Use the matching `find-port` or upload script instead of inventing port detection logic. |
 | Diagnose PlatformIO build, package, upload, or port issues | `unihiker-k10-platformio` | Use `k10-pio.sh`, `pio device list`, and `doctor-offline.sh` before changing project code. |
+| Diagnose K10 ASR wake-word, ES7243E, microphone, or all-zero I2S input | `unihiker-k10-platformio` | Read `references/k10-asr-audio-troubleshooting.md`; distinguish model loading from audio transport and drain startup DMA before judging the microphone. |
 | Flash MicroPython firmware | `unihiker-k10-micropython` | Use the bundled firmware and the documented BOOT/RST download-mode sequence. |
 | Upload or debug MicroPython code | `unihiker-k10-micropython` | Use `main.py` for auto-run behavior; non-entry files require REPL import or `main.py` import. |
 | Add HTTP OTA to an Arduino or PlatformIO project | `unihiker-k10-ota` | Add OTA partitions, add an HTTP `/ota` endpoint, and perform one USB upload before wireless updates. |
