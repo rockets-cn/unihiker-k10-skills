@@ -1,6 +1,6 @@
 ---
 name: unihiker-k10-platformio
-description: Use when programming a UNIHIKER K10 board with PlatformIO CLI, creating or converting Arduino/C++ K10 projects to PlatformIO, building, uploading, monitoring serial output, diagnosing K10 PlatformIO setup, or preparing/installing offline PlatformIO support for workshops, including macOS archives and Windows self-extracting USB installers.
+description: Use when programming a UNIHIKER K10 board with PlatformIO CLI, creating or converting Arduino/C++ K10 projects to PlatformIO, building, uploading, monitoring serial output, diagnosing K10 PlatformIO setup or ASR microphone/wake-word failures, or preparing/installing offline PlatformIO support for workshops, including macOS archives and Windows self-extracting USB installers.
 ---
 
 # UNIHIKER K10 - PlatformIO
@@ -261,6 +261,8 @@ See the [official Arduino/PIO example](https://www.unihiker.com.cn/wiki/k10/Ardu
 
 Compilable project: [`examples/tts-buttons`](examples/tts-buttons).
 
+When voice models load and commands register but the board does not wake, do not conclude that ASR works or that the microphone is dead from those messages alone. Read `references/k10-asr-audio-troubleshooting.md`, validate post-initialization I2S samples, drain stale silent DMA blocks before measuring, and confirm an actual wake/command event.
+
 ## OTA Notes
 
 PlatformIO's DFRobot platform supports normal USB upload with `pio run -t upload`. For OTA-style HTTP uploads used by existing K10 Arduino examples, continue using the existing OTA helper pattern only when the firmware exposes the expected `/ota` endpoint.
@@ -303,5 +305,6 @@ Use `unihiker-init-cn` for the Chinese model and `unihiker-init-en` for the Engl
 
 - Read `references/platformio-workshop.md` for offline bundle preparation, installation, and troubleshooting.
 - Read `references/k10-ai-model-flash.md` for AI model partitions, OTA compatibility, and recovery workflow.
+- Read `references/k10-asr-audio-troubleshooting.md` when models load but wake words or commands are not detected, microphone probes return zeros, or ES7243E/I2S startup is suspect.
 - Read `references/k10-arduino-api.md` for K10 API signatures.
 - Read `references/k10-arduino-examples.md` for complete K10 Arduino examples. The C++ APIs are the same as Arduino mode; only the build/upload toolchain changes.

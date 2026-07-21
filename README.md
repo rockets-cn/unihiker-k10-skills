@@ -9,7 +9,7 @@ Local Codex skills for working with the DFRobot Unihiker K10 board. Install thes
 | Skill | Use it for | Current notes |
 | --- | --- | --- |
 | `unihiker-k10-arduino` | Arduino/C++ sketches, K10 BSP setup, serial upload, Arduino API lookup, screen/sensor/RGB/audio/AI examples. | Uses FQBN `UNIHIKER:esp32:k10`; includes Windows `arduino-cli.exe`; documents Arduino CLI `build_cache.*` rather than older cache keys. |
-| `unihiker-k10-platformio` | PlatformIO CLI projects, K10 Arduino/C++ builds, serial upload, monitoring, and workshop offline support bundles. | Uses DFRobot's `platform-unihiker`; includes macOS archives and Windows self-extracting USB installers for offline workshops. |
+| `unihiker-k10-platformio` | PlatformIO CLI projects, K10 Arduino/C++ builds, serial upload, monitoring, ASR audio diagnostics, and workshop offline support bundles. | Uses DFRobot's `platform-unihiker`; documents stale startup DMA and ES7243E/I2S wake-word troubleshooting; includes macOS and Windows offline installers. |
 | `k10-compile-server` | Remote LAN compilation for PlatformIO K10 projects, browser Web Serial flashing, firmware download, and server-side USB flash. | Use an existing HTTPS compile server on port 8900, or self-host from `rockets-cn/unihiker-k10-compile-server`; preferred client upload needs only Chrome/Edge. |
 | `unihiker-k10-micropython` | Flashing MicroPython, uploading `main.py`, MicroPython API lookup, REPL-oriented troubleshooting. | Bundles K10 MicroPython firmware `v0.9.2`; only `main.py` auto-runs after reset. |
 | `unihiker-k10-ota` | Adding HTTP OTA update support to Arduino or PlatformIO projects. | Requires a custom partition table with `ota_0` and `ota_1`; AI projects must preserve the K10 model partitions. |
