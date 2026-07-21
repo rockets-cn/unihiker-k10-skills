@@ -2,6 +2,8 @@
 
 Local Codex skills for working with the DFRobot Unihiker K10 board. Install these folders into your Codex skills directory, then Codex can load the right K10 reference material, helper scripts, firmware bundle, and troubleshooting notes when you ask it to build or flash K10 projects.
 
+> **TTS compatibility:** K10 speech synthesis exists only in the Chinese firmware. The skills must verify that firmware variant before using Arduino/PlatformIO `ASR::setAsrSpeed()` / `ASR::speak()` or MicroPython TTS APIs. CN model-data selection alone is not proof of Chinese-firmware TTS support.
+
 ## What's Included
 
 | Skill | Use it for | Current notes |

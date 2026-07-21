@@ -2,6 +2,15 @@
 
 This reference is shared by the K10 Arduino, PlatformIO, OTA, and troubleshooting skills.
 
+## TTS Firmware Compatibility
+
+K10 speech synthesis APIs are available only in the Chinese firmware:
+
+- Arduino/PlatformIO: `ASR::setAsrSpeed()` and `ASR::speak()`
+- MicroPython: `asr.add_tts_data()` and `asr.start_tts()`
+
+Treat the firmware variant and model-data partitions as separate concerns. Preserving or flashing CN `model` / `voice_data` data is necessary for compatible Chinese-firmware TTS, but it does not add missing TTS APIs to English/international firmware. Confirm the Chinese firmware before generating, compiling, flashing, or troubleshooting TTS code.
+
 ## What Is Stored Where
 
 UNIHIKER K10 uses fixed flash regions for the built-in AI support files. Keep these offsets unchanged unless DFRobot publishes a new partition table.

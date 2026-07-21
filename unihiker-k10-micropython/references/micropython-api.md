@@ -223,6 +223,9 @@ while True:
     time.sleep(0.1)
 AI相关
 语音识别+语音合成
+
+> **固件限制：语音合成只存在于 K10 中文版固件。** 使用 `asr.add_tts_data()` 或 `asr.start_tts()` 前必须确认已刷写中文版 MicroPython 固件；英文/国际版固件不可使用这部分 API。
+
 import asr
 import time
 #asr.ASR_MODE_SINGLE 单次
