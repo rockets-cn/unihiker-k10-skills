@@ -26,6 +26,8 @@ K10 uses DFRobot's PlatformIO platform and Arduino framework package. First buil
 
 If a project uses K10 AI, voice recognition, TTS, face recognition, or OTA partitions, preserve the factory model-data offsets. Read the repository reference `references/k10-ai-model-flash.md` when available, or follow the model rules below.
 
+**TTS firmware requirement:** `ASR::setAsrSpeed()` and `ASR::speak()` exist only in the Chinese K10 firmware. Confirm the firmware variant before generating or compiling TTS code. `-DModel=CN` refreshes CN model data; it does not by itself prove that the installed framework/firmware variant provides TTS.
+
 Screen refresh policy: generated K10 display code must prefer partial redraws. Full-screen clearing or full-background redraw causes visible flicker and is uncomfortable; use it only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
 
 ## Quick Workflow
@@ -226,6 +228,7 @@ If build fails with `ModuleNotFoundError: No module named 'intelhex'` from `tool
 
 - Include K10 board APIs with `#include "unihiker_k10.h"`.
 - Include speech recognition with `#include "asr.h"`.
+- Speech synthesis is Chinese-firmware-only. Initialize it with `asr.setAsrSpeed(0..5)`, then call `asr.speak(...)`; supported arguments are `String`, `const char *`, and `float`.
 - For animations, dashboards, sensor readouts, voice status, OTA status, and other repeated updates, erase and redraw only the changed region. Do not use `canvasClear()` or redraw the full background in a loop unless the measured full-screen refresh rate is above 30 fps.
 - For ASR command registration, prefer mutable `char[]` command buffers:
 
@@ -235,6 +238,28 @@ asr.addASRCommand(1, cmdLightOn);
 ```
 
 Avoid `asr.addASRCommand(id, String("..."))` unless the upstream library has been verified fixed. Some K10 ASR library versions recurse in the `String` overload and can trigger a `loopTask` stack canary reset.
+
+Chinese-firmware TTS reference:
+
+```cpp
+#include "asr.h"
+#include "unihiker_k10.h"
+
+UNIHIKER_K10 k10;
+ASR asr;
+
+void setup() {
+  k10.begin();
+  asr.setAsrSpeed(2);  // 0-5
+  asr.speak("你好");
+}
+
+void loop() {}
+```
+
+See the [official Arduino/PIO example](https://www.unihiker.com.cn/wiki/k10/Arduino_PIO_Example) and [API list](https://www.unihiker.com.cn/wiki/k10/Arduino_PIO_API_List).
+
+Compilable project: [`examples/tts-buttons`](examples/tts-buttons).
 
 When voice models load and commands register but the board does not wake, do not conclude that ASR works or that the microphone is dead from those messages alone. Read `references/k10-asr-audio-troubleshooting.md`, validate post-initialization I2S samples, drain stale silent DMA blocks before measuring, and confirm an actual wake/command event.
 

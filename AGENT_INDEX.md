@@ -35,6 +35,7 @@ This file is the cold-start map for agents working in this repository. Read it b
 ## Non-Negotiable Constraints
 
 - Arduino and MicroPython firmware are mutually exclusive on the board.
+- Speech synthesis is available only in the Chinese K10 firmware. Confirm the firmware variant before using TTS APIs; retaining or refreshing CN model data alone is insufficient.
 - Arduino FQBN is `UNIHIKER:esp32:k10`.
 - PlatformIO board is `unihiker_k10` with `platform = https://github.com/DFRobot/platform-unihiker.git`.
 - Arduino sketches must use same-named sketch directories.

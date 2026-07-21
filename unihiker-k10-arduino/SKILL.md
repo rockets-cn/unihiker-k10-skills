@@ -12,6 +12,8 @@ CLI toolkit for Unihiker K10 board Arduino programming. **Core principle:** Foll
 **Firmware Version**: 0.9.2
 **FQBN**: `UNIHIKER:esp32:k10`
 
+**TTS firmware requirement:** `ASR::setAsrSpeed()` and `ASR::speak()` are available only in the Chinese K10 firmware. Before generating, compiling, or troubleshooting speech-synthesis code, confirm that the board/toolchain is using the Chinese firmware. Selecting or restoring CN model data is not, by itself, proof that the installed firmware exposes TTS.
+
 If a sketch uses K10 AI, voice recognition, TTS, face recognition, or OTA partitions, preserve the factory model-data offsets. Read the repository reference `references/k10-ai-model-flash.md` when available.
 
 Screen refresh policy: always design K10 display code around partial redraws. Full-screen clearing or full-background redraw causes obvious flicker and is uncomfortable; use it only for initialization, page switches, exit cleanup, or when you have measured full-screen refresh above 30 fps.
@@ -376,6 +378,7 @@ void loop() {
 | **编译错误: No such file or directory** | 检查库依赖，部分库需要手动安装到Documents/Arduino/libraries |
 | **上传失败/无法连接** | 按住BOOT按钮，按RST重置，释放BOOT进入下载模式 |
 | **屏幕闪烁** | 使用局部刷新，避免每帧调用 `canvasClear()` 或全屏背景重绘；只有实测全屏刷新超过 30 fps 才可高频全屏刷新 |
+| **`setAsrSpeed` / `speak` missing or TTS does not work** | 语音合成仅存在于中文版固件；确认当前固件版本，不要把刷新 CN 模型数据误当成切换中文版固件 |
 | **Windows PowerShell执行策略限制** | 运行 `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
 
 ## 上传脚本使用说明
@@ -649,9 +652,9 @@ k10.stopPlayTone();           // Stop tone
 k10.playMusic(Melodies, options); // Built-in music
 k10.stopPlayAudio();            // Stop audio
 
-// TTS (Text-to-Speech)
-asr.setAsrSpeed(speed);      // Set speed
-asr.speak(text);             // Speak text
+// TTS (Chinese firmware only; include "asr.h" and create ASR asr)
+asr.setAsrSpeed(speed);      // uint8_t, 0-5
+asr.speak(text);             // String, const char *, or float
 ```
 
 **Microphone**:
@@ -693,6 +696,54 @@ String qrCode = ai.getQrCodeContent();  // Get scanned QR code
 // Content detection
 bool detected = ai.isDetectContent(mode);
 ```
+
+### TTS (Chinese Firmware Only)
+
+**Import**: `#include "asr.h"`
+
+Do not offer or generate this API for English/international firmware. `setAsrSpeed()` initializes TTS and sets the speed from `0` to `5`; call it before `speak()`.
+
+```cpp
+#include "asr.h"
+#include "unihiker_k10.h"
+
+UNIHIKER_K10 k10;
+ASR asr;
+
+void onButtonAPressed();
+void onButtonBPressed();
+
+void setup() {
+  k10.begin();
+  asr.setAsrSpeed(2);
+  k10.buttonA->setPressedCallback(onButtonAPressed);
+  k10.buttonB->setPressedCallback(onButtonBPressed);
+  asr.speak("你好");
+}
+
+void loop() {}
+
+void onButtonAPressed() {
+  asr.speak("我是行空板");
+}
+
+void onButtonBPressed() {
+  asr.speak("语音合成");
+}
+```
+
+API signatures from the bundled K10 `asr.h`:
+
+```cpp
+void setAsrSpeed(uint8_t speed);  // 0-5
+void speak(String prompt);
+void speak(const char *prompt);
+void speak(float prompt);
+```
+
+Official sources: [Arduino/PIO example](https://www.unihiker.com.cn/wiki/k10/Arduino_PIO_Example) and [Arduino/PIO API list](https://www.unihiker.com.cn/wiki/k10/Arduino_PIO_API_List).
+
+Compilable copy: [`examples/tts-buttons/tts-buttons.ino`](examples/tts-buttons/tts-buttons.ino).
 
 ### ASR (Speech Recognition)
 
@@ -775,7 +826,7 @@ digital_read(eP3);             // Digital read
    - Built-in music playback
    - Audio recording to TF card
    - Audio playback from TF card
-   - TTS examples
+   - TTS examples (Chinese firmware only)
 
 5. **GPIO Examples**
    - Digital input/output on P0/P1

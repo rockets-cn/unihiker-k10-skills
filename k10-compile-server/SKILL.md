@@ -19,6 +19,8 @@ Self-hosting details live in `references/server-setup.md`. The Docker setup pers
 
 If `platformio.ini` references `partitions.csv`, the server expects that file to be present. It returns an error instead of silently generating a partition table.
 
+**TTS firmware requirement:** K10 speech synthesis (`ASR::setAsrSpeed()` / `ASR::speak()`) exists only in the Chinese firmware. A successful remote compile or `-DModel=CN` model refresh does not by itself prove that the selected framework/firmware variant provides TTS. Confirm Chinese-firmware support before compiling and flashing TTS projects.
+
 ## Configuration
 
 **服务器地址：** 必须来自用户提供的服务器 URL、`COMPILE_SERVER` 环境变量，或项目/对话中已经明确确认过的地址。不要猜测、不要写死公共域名；如果不知道服务器地址，先问用户：“你的 K10 编译服务器地址是什么（例如 `https://k10.example.com:8900`）？”
@@ -290,6 +292,7 @@ bash k10-compile-server/scripts/compile-project.sh \
 | `"k10_toolchain_ready": false` | Server hasn't built a K10 project yet | Run a dummy build on the server first, or install the PlatformIO K10 platform |
 | `error: "未找到 platformio.ini"` | Project missing platformio.ini or zip structure wrong | Make sure platformio.ini is at the zip root |
 | `error: "缺少 partitions.csv"` | `platformio.ini` references a partition table that was not uploaded | Add the matching `partitions.csv` next to `platformio.ini` |
+| `setAsrSpeed` / `speak` missing or TTS is silent | Project is not using the Chinese K10 firmware variant | Confirm Chinese-firmware support; compiling successfully or retaining CN model data alone is insufficient |
 | `error: "编译超时"` | Project takes > 5 min to compile | Simplify project, or use local `pio run` for this project |
 | Connection refused | Server not running | Start the Docker/systemd service from `references/server-setup.md` |
 | SSL cert error on curl | Self-signed cert | Use `-k` flag (insecure) for curl |
