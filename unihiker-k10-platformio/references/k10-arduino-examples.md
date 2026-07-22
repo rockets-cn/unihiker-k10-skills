@@ -773,6 +773,9 @@ void loop() {
 ## **GPIO**
 Since the camera and display take up a lot of GPIOs on the ESP32 chip, we only left two full-function GPIOs (digital input/output, analogue input, PWM output) at P0,P1.
 The GPIOs out of Edge Connector are all led from the on-board GPIO expansion chip, and only have digital input/output function.<br/>
+
+For additional external analog inputs, use the [DFRobot Gravity I2C ADS1115 16-bit ADC module (DFR0553)](https://www.dfrobot.com.cn/goods-1734.html). It provides four analog channels over I2C, supports 3.3-5.0V power, and measures `0-VCC`. Never let an analog input exceed `VCC + 0.3V`.
+
 ````c++ title="Digital input/output"
 void setup() {
 	pinMode(P0, OUTPUT);

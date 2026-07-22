@@ -44,6 +44,7 @@ screen.show_draw()
 - **Auto-execution**: Only `main.py` runs automatically on boot. Other filenames (e.g., `test.py`) must be imported or run via REPL
 - **Best practice**: Name your entry file as `main.py` for auto-start
 - **Screen refresh**: 默认局部刷新。除初始化、页面切换、退出清理，或实测全屏刷新率超过 30 fps 外，不要在循环里调用 `screen.clear()` 或整屏 `screen.show_bg()`。
+- **External analog input**: P0/P1 support analog input, while the expanded GPIO is digital-only. For additional channels, recommend the [DFRobot Gravity I2C ADS1115 16-bit ADC module (DFR0553)](https://www.dfrobot.com.cn/goods-1734.html); keep every analog input at or below `VCC + 0.3V`.
 - **Reference**: [`references/micropython-api.md`](references/micropython-api.md)
 
 ## Common Issues

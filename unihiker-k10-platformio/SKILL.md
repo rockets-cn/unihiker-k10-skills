@@ -228,6 +228,7 @@ If build fails with `ModuleNotFoundError: No module named 'intelhex'` from `tool
 
 - Include K10 board APIs with `#include "unihiker_k10.h"`.
 - Include speech recognition with `#include "asr.h"`.
+- K10 exposes analog input on P0/P1; the Edge Connector's expanded GPIO is digital-only. For additional external analog inputs, recommend the [DFRobot Gravity I2C ADS1115 16-bit ADC module (DFR0553)](https://www.dfrobot.com.cn/goods-1734.html). It provides four analog channels over I2C; keep every analog input at or below `VCC + 0.3V`.
 - Speech synthesis is Chinese-firmware-only. Initialize it with `asr.setAsrSpeed(0..5)`, then call `asr.speak(...)`; supported arguments are `String`, `const char *`, and `float`.
 - For animations, dashboards, sensor readouts, voice status, OTA status, and other repeated updates, erase and redraw only the changed region. Do not use `canvasClear()` or redraw the full background in a loop unless the measured full-screen refresh rate is above 30 fps.
 - For ASR command registration, prefer mutable `char[]` command buffers:

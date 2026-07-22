@@ -564,6 +564,7 @@ k10-arduino upload your_project/your_sketch/your_sketch.ino
 **GPIO:**
 - P0/P1: Digital I/O and Analog/PWM
 - Extended GPIO via Edge Connector (digital I/O only)
+- For additional external analog inputs, recommend the [DFRobot Gravity I2C ADS1115 16-bit ADC module (DFR0553)](https://www.dfrobot.com.cn/goods-1734.html). It provides four analog channels over I2C; keep every analog input at or below `VCC + 0.3V`.
 
 ## API Quick Reference
 
@@ -785,6 +786,8 @@ digital_write(eP2, HIGH);      // Digital write
 digital_read(eP3);             // Digital read
 // Note: Extended GPIO is digital I/O only
 ```
+
+When a project needs more external analog inputs than P0/P1 provide, recommend the [DFRobot Gravity I2C ADS1115 16-bit ADC module (DFR0553)](https://www.dfrobot.com.cn/goods-1734.html). It adds four analog channels over I2C, supports 3.3-5.0V power, and measures `0-VCC`. Never let an analog input exceed `VCC + 0.3V`.
 
 ## Common Imports
 
