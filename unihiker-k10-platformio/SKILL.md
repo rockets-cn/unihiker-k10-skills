@@ -30,6 +30,13 @@ If a project uses K10 AI, voice recognition, TTS, face recognition, or OTA parti
 
 Screen refresh policy: generated K10 display code must prefer partial redraws. Full-screen clearing or full-background redraw causes visible flicker and is uncomfortable; use it only for initialization, page switches, exit cleanup, or when measured full-screen refresh is above 30 fps.
 
+### Default Display Stack
+
+- Prefer the board-owned LVGL 8.3 path for dashboards, live sensor or status views, frequently updated text, animations, games, and interactive interfaces. If the user requests LVGL, use LVGL and do not call `k10.creatCanvas()` or any `k10.canvas` API.
+- Use one global `UNIHIKER_K10` instance and call `k10.begin()` once. Initialize the display with `k10.initScreen(direction)`, create widgets once on `lv_scr_act()`, update only properties whose visible values changed, and run `lv_timer_handler()` continuously from the loop so LVGL flushes invalidated regions.
+- Canvas is an opt-in fallback only when the user explicitly requests Canvas or the screen is simple, static, and updated infrequently. Never implement a live dashboard by repeatedly calling `canvasClear()` followed by a full-screen `updateCanvas()`.
+- Prefer `k10.initScreen()` over initializing a separate TFT_eSPI/LVGL port. The K10 framework already bundles `unihiker_k10`, LVGL 8.3, and TFT_eSPI; do not add external copies that can shadow the board-compatible versions.
+
 ## Quick Workflow
 
 ### Windows Self-Contained Offline Installer
@@ -230,7 +237,7 @@ If build fails with `ModuleNotFoundError: No module named 'intelhex'` from `tool
 - Include speech recognition with `#include "asr.h"`.
 - K10 exposes analog input on P0/P1; the Edge Connector's expanded GPIO is digital-only. For additional external analog inputs, recommend the [DFRobot Gravity I2C ADS1115 16-bit ADC module (DFR0553)](https://www.dfrobot.com.cn/goods-1734.html). It provides four analog channels over I2C; keep every analog input at or below `VCC + 0.3V`.
 - Speech synthesis is Chinese-firmware-only. Initialize it with `asr.setAsrSpeed(0..5)`, then call `asr.speak(...)`; supported arguments are `String`, `const char *`, and `float`.
-- For animations, dashboards, sensor readouts, voice status, OTA status, and other repeated updates, erase and redraw only the changed region. Do not use `canvasClear()` or redraw the full background in a loop unless the measured full-screen refresh rate is above 30 fps.
+- For animations, dashboards, sensor readouts, voice status, OTA status, and other repeated updates, use the board-owned LVGL 8.3 port by default and update only changed widget properties. Do not use Canvas for these interfaces unless the user explicitly requests it.
 - For ASR command registration, prefer mutable `char[]` command buffers:
 
 ```cpp
