@@ -10,6 +10,7 @@ Local Codex skills for working with the DFRobot Unihiker K10 board. Install thes
 | --- | --- | --- |
 | `unihiker-k10-arduino` | Arduino/C++ sketches, K10 BSP setup, serial upload, Arduino API lookup, screen/sensor/RGB/audio/AI examples. | Uses FQBN `UNIHIKER:esp32:k10`; includes Windows `arduino-cli.exe`; documents Arduino CLI `build_cache.*` rather than older cache keys. |
 | `unihiker-k10-platformio` | PlatformIO CLI projects, K10 Arduino/C++ builds, serial upload, monitoring, ASR audio diagnostics, and workshop offline support bundles. | Uses DFRobot's `platform-unihiker`; documents stale startup DMA and ES7243E/I2S wake-word troubleshooting; includes macOS and Windows offline installers. |
+| `unihiker-k10-box-platformio` | PlatformIO/LVGL projects for the K10 information-technology experiment box, including all box sensors and actuators. | Separates K10-native and box hardware; covers QMI8658, line tracking, IO controller, LVGL formatting crashes, motor startup, and safe actuator tests. |
 | `k10-compile-server` | Remote LAN compilation for PlatformIO K10 projects, browser Web Serial flashing, firmware download, and server-side USB flash. | Use an existing HTTPS compile server on port 8900, or self-host from `rockets-cn/unihiker-k10-compile-server`; preferred client upload needs only Chrome/Edge. |
 | `unihiker-k10-micropython` | Flashing MicroPython, uploading `main.py`, MicroPython API lookup, REPL-oriented troubleshooting. | Bundles K10 MicroPython firmware `v0.9.2`; only `main.py` auto-runs after reset. |
 | `unihiker-k10-ota` | Adding HTTP OTA update support to Arduino or PlatformIO projects. | Requires a custom partition table with `ota_0` and `ota_1`; AI projects must preserve the K10 model partitions. |
@@ -22,6 +23,7 @@ Agents should read `AGENT_INDEX.md` first, then load only the matching skill for
 | --- | --- |
 | Arduino sketch, C++ API, serial upload, K10 BSP setup | `unihiker-k10-arduino/SKILL.md` |
 | PlatformIO CLI project, PlatformIO upload, offline workshop bundle | `unihiker-k10-platformio/SKILL.md` |
+| K10 experiment-box sensors, QMI8658, line tracker, LVGL dashboard, motors, buzzer, or traffic lights | `unihiker-k10-box-platformio/SKILL.md` |
 | LAN compile server build, browser Web Serial flash, firmware download, server-side flash | `k10-compile-server/SKILL.md` |
 | MicroPython firmware, `main.py`, `mpremote`, Python API | `unihiker-k10-micropython/SKILL.md` |
 | Wireless Arduino firmware update, HTTP OTA, ESP-NOW maintenance OTA mode | `unihiker-k10-ota/SKILL.md` |
@@ -37,6 +39,7 @@ Copy or symlink every skill folder into your Codex skills directory:
 mkdir -p ~/.agents/skills
 cp -R unihiker-k10-arduino ~/.agents/skills/
 cp -R unihiker-k10-platformio ~/.agents/skills/
+cp -R unihiker-k10-box-platformio ~/.agents/skills/
 cp -R k10-compile-server ~/.agents/skills/
 cp -R unihiker-k10-micropython ~/.agents/skills/
 cp -R unihiker-k10-ota ~/.agents/skills/
@@ -48,6 +51,7 @@ On Windows PowerShell:
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills"
 Copy-Item -Recurse .\unihiker-k10-arduino "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-platformio "$env:USERPROFILE\.agents\skills\"
+Copy-Item -Recurse .\unihiker-k10-box-platformio "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\k10-compile-server "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-micropython "$env:USERPROFILE\.agents\skills\"
 Copy-Item -Recurse .\unihiker-k10-ota "$env:USERPROFILE\.agents\skills\"
@@ -152,6 +156,44 @@ Students can run `K10P-windows-x64.exe` from the USB drive; it installs the bund
 
 The macOS self-contained installer bundles PlatformIO Python wheels, including conditional dependencies such as `typing-extensions` for student Macs running Python older than 3.13. If an older installer fails offline with `No matching distribution found for typing-extensions`, rebuild it with the current `prepare-macos-offline-installer.sh`.
 
+## K10 Experiment Box Quick Start
+
+The K10 experiment box is not just a K10 board with extra widgets. Its peripherals share the I2C wiring with the board but use a separate driver and different device identities:
+
+| Hardware layer | Device | Address | Actual role |
+| --- | --- | --- | --- |
+| K10 native | AHT20 | `0x38` | Temperature and humidity |
+| K10 native | LTR303 | `0x29` | Ambient light |
+| K10 native | SC7A20H | `0x19` | Board accelerometer; it may be absent on a box assembly |
+| Experiment box | IO controller | `0x20` | Knob, sound, keys, ultrasonic, IR, motors, buzzer, and traffic lights |
+| Experiment box | Line tracker | `0x30` | Five-channel raw values, thresholds, and digital states |
+| Experiment box | QMI8658 | `0x6B` | Box acceleration and gyroscope data; expected chip ID is `0x05` |
+
+Use `unihiker-k10-box-platformio` for box projects. Start with a normal K10 PlatformIO project, then install the pinned and PlatformIO-compatible DFRobot box driver:
+
+```bash
+bash unihiker-k10-platformio/scripts/init-k10-platformio-project.sh my-k10-box-project
+bash unihiker-k10-box-platformio/scripts/install-k10-box-driver.sh my-k10-box-project
+pio run -d my-k10-box-project
+```
+
+The tested LVGL layout uses four pages:
+
+1. K10 temperature, humidity, ambient light, microphone, and buttons, plus box QMI8658 acceleration.
+2. Box knob, sound, infrared code, ultrasonic distance, keys, conductance, and obstacle sensor.
+3. Box gyroscope and five-channel line-tracker data.
+4. A manually triggered actuator test for traffic lights, K10 RGB, both buzzers, and both DC motors.
+
+Observed hardware and software constraints are captured in the skill:
+
+- Do not report `k10.getAccelerometerX/Y/Z()` zeros as valid box acceleration when startup reports `SC7A20H Device not found`; read and label the box QMI8658 instead.
+- Format floating-point values with `snprintf`, then update LVGL with `lv_label_set_text`. The bundled LVGL configuration disables float formatting, and a large `lv_label_set_text_fmt` call can crash when opening a data-heavy page.
+- Treat ultrasonic `0xFFFF` as no valid reading and display `--`.
+- Motor log output is not proof of movement. The tested startup pulse uses duty `255` for roughly 800-1000 ms, with a stop interval before reversal; verify wheel motion or a simultaneous QMI8658 change.
+- Never start actuator tests at boot. Require an explicit action and stop motors, buzzers, and LEDs on completion, cancellation, page exit, and startup.
+
+For exact APIs and diagnosis, read `unihiker-k10-box-platformio/references/hardware-map.md`, `lvgl-dashboard.md`, and `troubleshooting.md`.
+
 ## MicroPython Quick Start
 
 1. Install the flashing and upload tools:
@@ -238,6 +280,7 @@ Toolchain-specific recovery notes are in `references/k10-ai-model-flash.md` and 
 ```text
 unihiker-k10-arduino/       Arduino skill, upload scripts, API references, examples
 unihiker-k10-platformio/    PlatformIO skill, offline bundle scripts, API references
+unihiker-k10-box-platformio/ Experiment-box PlatformIO/LVGL skill, driver installer, hardware and debugging references
 k10-compile-server/         LAN compile server skill, remote build and browser/server USB upload scripts
 unihiker-k10-micropython/   MicroPython skill, flash/upload scripts, firmware, API reference
 unihiker-k10-ota/           HTTP OTA skill, implementation guide, upload scripts
@@ -256,6 +299,7 @@ Validate skill frontmatter after changing `SKILL.md`:
 ```bash
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-arduino
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-platformio
+python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-box-platformio
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py k10-compile-server
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-micropython
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-ota

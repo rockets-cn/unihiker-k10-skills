@@ -19,6 +19,8 @@ This file is the cold-start map for agents working in this repository. Read it b
 | Create, fix, compile, or upload an Arduino sketch | `unihiker-k10-arduino` | Read Arduino API references before using K10-specific classes. |
 | Set up Arduino CLI or K10 BSP | `unihiker-k10-arduino` | Configure both the K10 BSP URL and an ESP32 Core URL before installing `UNIHIKER:esp32`. |
 | Create, fix, compile, upload, or monitor a PlatformIO K10 project | `unihiker-k10-platformio` | Read PlatformIO workflow notes and the bundled K10 Arduino API references before using K10-specific classes. |
+| Build or diagnose a K10 experiment-box PlatformIO/LVGL project | `unihiker-k10-box-platformio` | Read `references/hardware-map.md`; keep native K10 devices separate from box IO `0x20`, line tracker `0x30`, and QMI8658 `0x6B`. |
+| Diagnose missing box sensor values, LVGL float crashes, or non-moving box motors | `unihiker-k10-box-platformio` | Read `references/troubleshooting.md` and verify the physical symptom, not only serial control-stage logs. |
 | Compile a PlatformIO K10 project through the LAN server and flash it from a client browser | `k10-compile-server` | Prefer `--web-serial` / `-WebSerial`; use `references/server-setup.md` if the user needs to self-host `rockets-cn/unihiker-k10-compile-server`. |
 | Prepare or install a PlatformIO offline workshop bundle or USB installer | `unihiker-k10-platformio` | Use the PlatformIO bundle scripts; prepare one bundle or self-contained installer per OS/CPU architecture. |
 | Diagnose macOS PlatformIO offline installer pip dependency errors | `unihiker-k10-platformio` | Read `references/platformio-workshop.md`; missing `typing-extensions` means the installer was built with an older wheelhouse. |
@@ -40,6 +42,8 @@ This file is the cold-start map for agents working in this repository. Read it b
 - PlatformIO board is `unihiker_k10` with `platform = https://github.com/DFRobot/platform-unihiker.git`.
 - Arduino sketches must use same-named sketch directories.
 - PlatformIO projects use `platformio.ini` and `src/main.cpp`; do not mix Arduino CLI FQBN settings into PlatformIO config.
+- K10 experiment-box work must distinguish native SC7A20H `0x19` from box QMI8658 `0x6B`; absent native acceleration must not be reported as valid zeros.
+- Experiment-box actuator tests must be explicitly triggered and must stop motors, buzzer, and LEDs on completion, cancellation, page exit, and startup.
 - Arduino canvas calls use `k10.canvas->`.
 - Screen updates must default to partial redraws. Full-screen clearing or full-background redraw causes visible flicker and is only acceptable for initialization, page changes, exit cleanup, or when the measured full-screen refresh rate is above 30 fps.
 - Current Arduino CLI cache settings use `build_cache.*`; do not introduce `compiler.cache.*` or `ccache` as standard setup.
@@ -58,6 +62,7 @@ Use scripts when the task involves deterministic device operations:
 | Arduino serial upload | `unihiker-k10-arduino/scripts/upload-arduino.sh`, `upload-arduino.ps1`, `upload_k10.py`, or `upload-k10.bat` |
 | Arduino OTA compile/upload | `unihiker-k10-arduino/scripts/compile-ota.sh` or `compile-ota.ps1` |
 | PlatformIO project setup/build/upload/monitor | `unihiker-k10-platformio/scripts/init-k10-platformio-project.sh` or `k10-pio.sh` / `k10-pio.ps1` |
+| Install the pinned K10 experiment-box driver | `unihiker-k10-box-platformio/scripts/install-k10-box-driver.sh` |
 | LAN server compile and Web Serial firmware upload | `k10-compile-server/scripts/compile-project.sh --web-serial` or `compile-project.ps1 -WebSerial` |
 | PlatformIO workshop offline bundle | `unihiker-k10-platformio/scripts/prepare-offline-bundle.sh`, `prepare-macos-offline-installer.sh`, `prepare-windows-offline-installer.ps1`, `install-offline-bundle.sh`, `install-offline-bundle.ps1`, or `doctor-offline.sh` |
 | MicroPython firmware flashing | `unihiker-k10-micropython/scripts/flash-micropython.sh` or `flash-mp-auto.sh` |
@@ -71,11 +76,13 @@ Run the relevant checks after documentation or skill changes:
 ```bash
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-arduino
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-platformio
+python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-box-platformio
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py k10-compile-server
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-micropython
 python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py unihiker-k10-ota
 bash -n unihiker-k10-arduino/scripts/*.sh
 bash -n unihiker-k10-platformio/scripts/*.sh
+bash -n unihiker-k10-box-platformio/scripts/*.sh
 bash -n k10-compile-server/scripts/*.sh
 bash -n unihiker-k10-micropython/scripts/*.sh
 ```
