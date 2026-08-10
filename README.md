@@ -10,7 +10,7 @@ Local Codex skills for working with the DFRobot Unihiker K10 board. Install thes
 | --- | --- | --- |
 | `unihiker-k10-arduino` | Arduino/C++ sketches, K10 BSP setup, serial upload, Arduino API lookup, screen/sensor/RGB/audio/AI examples. | Uses FQBN `UNIHIKER:esp32:k10`; includes Windows `arduino-cli.exe`; documents Arduino CLI `build_cache.*` rather than older cache keys. |
 | `unihiker-k10-platformio` | PlatformIO CLI projects, K10 Arduino/C++ builds, serial upload, monitoring, ASR audio diagnostics, and workshop offline support bundles. | Uses DFRobot's `platform-unihiker`; documents stale startup DMA and ES7243E/I2S wake-word troubleshooting; includes macOS and Windows offline installers. |
-| `unihiker-k10-box-platformio` | PlatformIO/LVGL projects for the K10 information-technology experiment box, including all box sensors and actuators. | Separates K10-native and box hardware; covers QMI8658, line tracking, IO controller, LVGL formatting crashes, motor startup, and safe actuator tests. |
+| `unihiker-k10-box-platformio` | PlatformIO/LVGL projects for the K10 information-technology experiment box, including sensors, six-axis games, audio visualization, and actuators. | Separates K10-native and box hardware; covers QMI8658 tilt/flick control, microphone FFT, line tracking, knob motors, LVGL constraints, and safe outputs. |
 | `k10-compile-server` | Remote LAN compilation for PlatformIO K10 projects, browser Web Serial flashing, firmware download, and server-side USB flash. | Use an existing HTTPS compile server on port 8900, or self-host from `rockets-cn/unihiker-k10-compile-server`; preferred client upload needs only Chrome/Edge. |
 | `unihiker-k10-micropython` | Flashing MicroPython, uploading `main.py`, MicroPython API lookup, REPL-oriented troubleshooting. | Bundles K10 MicroPython firmware `v0.9.2`; only `main.py` auto-runs after reset. |
 | `unihiker-k10-ota` | Adding HTTP OTA update support to Arduino or PlatformIO projects. | Requires a custom partition table with `ota_0` and `ota_1`; AI projects must preserve the K10 model partitions. |
@@ -23,7 +23,7 @@ Agents should read `AGENT_INDEX.md` first, then load only the matching skill for
 | --- | --- |
 | Arduino sketch, C++ API, serial upload, K10 BSP setup | `unihiker-k10-arduino/SKILL.md` |
 | PlatformIO CLI project, PlatformIO upload, offline workshop bundle | `unihiker-k10-platformio/SKILL.md` |
-| K10 experiment-box sensors, QMI8658, line tracker, LVGL dashboard, motors, buzzer, or traffic lights | `unihiker-k10-box-platformio/SKILL.md` |
+| K10 experiment-box sensors, QMI8658 games, line tracker, audio FFT, LVGL dashboard, motors, buzzer, or traffic lights | `unihiker-k10-box-platformio/SKILL.md` |
 | LAN compile server build, browser Web Serial flash, firmware download, server-side flash | `k10-compile-server/SKILL.md` |
 | MicroPython firmware, `main.py`, `mpremote`, Python API | `unihiker-k10-micropython/SKILL.md` |
 | Wireless Arduino firmware update, HTTP OTA, ESP-NOW maintenance OTA mode | `unihiker-k10-ota/SKILL.md` |
@@ -177,7 +177,8 @@ bash unihiker-k10-box-platformio/scripts/install-k10-box-driver.sh my-k10-box-pr
 pio run -d my-k10-box-project
 ```
 
-The tested LVGL layout uses four pages:
+The skill includes reusable patterns for sensor dashboards and focused
+single-screen applications. The tested dashboard layout uses four pages:
 
 1. K10 temperature, humidity, ambient light, microphone, and buttons, plus box QMI8658 acceleration.
 2. Box knob, sound, infrared code, ultrasonic distance, keys, conductance, and obstacle sensor.
@@ -192,7 +193,19 @@ Observed hardware and software constraints are captured in the skill:
 - Motor log output is not proof of movement. The tested startup pulse uses duty `255` for roughly 800-1000 ms, with a stop interval before reversal; verify wheel motion or a simultaneous QMI8658 change.
 - Never start actuator tests at boot. Require an explicit action and stop motors, buzzers, and LEDs on completion, cancellation, page exit, and startup.
 
-For exact APIs and diagnosis, read `unihiker-k10-box-platformio/references/hardware-map.md`, `lvgl-dashboard.md`, and `troubleshooting.md`.
+Additional tested patterns include:
+
+- A single-screen 18 x 18 Snake game controlled only by the box QMI8658. It
+  averages 0.6 seconds of neutral-position samples, waits for the first tilt,
+  combines accelerometer tilt with gyroscope flick response, and supports an
+  A+B or shake restart.
+- A 512-point, 16 kHz microphone FFT display with a 64-point waveform,
+  16 spectrum bands, dBFS loudness, adaptive quiet gating, and low/mid/high
+  energy mapped to the K10 RGB LEDs and box traffic lights.
+- Manual two-motor speed control from the box angle knob using a stop dead zone
+  and a `90..255` running-duty range.
+
+For exact APIs and diagnosis, read `unihiker-k10-box-platformio/references/hardware-map.md`, `lvgl-dashboard.md`, `audio-fft.md`, `six-axis-games.md`, and `troubleshooting.md`.
 
 ## MicroPython Quick Start
 

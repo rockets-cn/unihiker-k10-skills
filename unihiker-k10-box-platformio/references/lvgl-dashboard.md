@@ -99,6 +99,32 @@ For diagnostics, accept serial commands such as:
 - `t`: start actuator test.
 - `x`: emergency stop.
 
+## Knob-controlled motors
+
+Map the box angle knob to both DC motors only on an explicit motor-control
+screen. Use a left dead zone and preserve enough duty to overcome geared-motor
+starting friction:
+
+```cpp
+constexpr uint16_t kDeadZone = 64;
+constexpr uint16_t kKnobMax = 4095;
+constexpr uint8_t kMinimumRunningSpeed = 90;
+
+uint8_t knobToMotorSpeed(uint16_t knob) {
+  if (knob <= kDeadZone) return 0;
+  if (knob >= kKnobMax) return 255;
+  return kMinimumRunningSpeed +
+         (static_cast<uint32_t>(knob - kDeadZone) *
+          (255 - kMinimumRunningSpeed)) /
+             (kKnobMax - kDeadZone);
+}
+```
+
+Initialize M1 before M2 because the upstream driver shares PWM setup across the
+two paths. Update around every 100 ms, skip unchanged PWM values, and stop both
+motors when leaving the control screen, pressing the stop control, or handling
+an error. Do not start knob motor control automatically at boot.
+
 ## Sensor sampling
 
 - Sample sensors around every 500 ms and print a concise serial summary around
