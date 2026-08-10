@@ -1,6 +1,6 @@
 ---
 name: unihiker-k10-box-platformio
-description: Use when building, uploading, or debugging PlatformIO Arduino/C++ projects for the UNIHIKER K10 information-technology experiment box (K10 试验盒), especially LVGL sensor dashboards, DFRobot_K10Box integration, QMI8658/line-tracker/IO-controller data, motor/buzzer/traffic-light actuator tests, or K10-native versus box-hardware conflicts.
+description: Use when building, uploading, or debugging PlatformIO Arduino/C++ projects for the UNIHIKER K10 information-technology experiment box (K10 试验盒), especially LVGL sensor dashboards or games, QMI8658 six-axis control, microphone FFT visualizers and sound-reactive lights, DFRobot_K10Box integration, knob-controlled motors, actuator tests, or K10-native versus box-hardware conflicts.
 ---
 
 # UNIHIKER K10 Box - PlatformIO
@@ -18,7 +18,11 @@ Before writing hardware code, read `references/hardware-map.md` completely.
 Then read only the task-specific reference:
 
 - Read `references/lvgl-dashboard.md` for LVGL pages, live sensor displays,
-  button callbacks, or actuator self-tests.
+  button callbacks, knob-controlled motors, or actuator self-tests.
+- Read `references/audio-fft.md` for microphone waveforms, FFT spectra,
+  dominant-frequency detection, dBFS loudness, or sound-reactive lights.
+- Read `references/six-axis-games.md` for QMI8658 tilt/flick controls, motion
+  calibration, or an LVGL Snake-style game.
 - Read `references/troubleshooting.md` for missing values, crashes, motors that
   do not move, I2C contention, upload failures, or runtime verification.
 
@@ -85,6 +89,8 @@ IMU was initialized.
   present an absent SC7A20H as valid `(0,0,0)` data.
 - Read QMI8658 once per refresh with `getQMI8658xyz()`, then convert all six
   public raw fields. Do not trigger six redundant I2C transactions.
+- For motion controls, calibrate a neutral pose before accepting input and keep
+  accelerometer and gyroscope units explicit (`mg` and `dps`).
 - Perform LVGL calls only from Arduino's main loop. Button-task callbacks may
   update atomics or flags, but must not touch LVGL objects.
 - Prefer partial widget updates. Do not clear or redraw the whole screen in a
@@ -94,6 +100,8 @@ IMU was initialized.
   mixed float/string argument lists.
 - Run actuator tests only after an explicit user action. Stop all motors,
   buzzer, and LEDs on completion, cancellation, page exit, and startup.
+- Treat the K10 I2S microphone as K10-native hardware even when its spectrum
+  drives box LEDs. Do not confuse box sound-level ADC data with microphone PCM.
 - The box driver exposes DC motors, red/yellow/green LEDs, and a buzzer. It does
   not expose a servo API.
 
